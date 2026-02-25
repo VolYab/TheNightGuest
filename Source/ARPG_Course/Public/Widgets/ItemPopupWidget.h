@@ -13,5 +13,8 @@ UCLASS()
 class ARPG_COURSE_API UItemPopupWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
+
+protected:
+	UPROPERTY(meta=(BindWidget))
+	class UTextBlock* PopupText;
 };

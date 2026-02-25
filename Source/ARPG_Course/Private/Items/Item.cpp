@@ -6,9 +6,7 @@
 #include "Components/SphereComponent.h"
 #include "Characters/ARPGCharacter.h"
 #include "Components/WidgetComponent.h"
-#include "DataAssets/ItemDataAsset.h"
-#include "Blueprint/UserWidget.h"
-#include "Interfaces/ItemWidgetInterface.h"
+
 
 AItem::AItem()
 {
@@ -22,12 +20,6 @@ AItem::AItem()
 
 	PopupWidget = CreateDefaultSubobject<UWidgetComponent>("PopupWidget");
 	PopupWidget->SetupAttachment(GetRootComponent());
-	FVector WidgetLocation = FVector(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + 100.f);
-	PopupWidget->SetWorldLocation(WidgetLocation);
-	PopupWidget->SetWidgetSpace(EWidgetSpace::Screen);
-	PopupWidget->SetTickMode(ETickMode::Automatic);
-	PopupWidget->SetDrawSize(FVector2D(100.f, 100.f));
-	PopupWidget->SetWidgetClass(UUserWidget::StaticClass());
 	
 }
 
@@ -57,24 +49,9 @@ void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 	if (ARPGCharacter)
 	{
 		ARPGCharacter->SetOverlappingItem(this);
-		UE_LOG(LogTemp, Warning, TEXT("Overlap!"))
-		
-		if (PopupWidgetClass)
+		if (PopupWidget)
 		{
-			PopupWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), PopupWidgetClass);
-			if (PopupWidgetInstance)
-			{
-				PopupWidgetInstance->AddToViewport();
-				PopupWidgetInstance->SetVisibility(ESlateVisibility::Visible);
-				/*if (IItemWidget* ItemWidgetInterface = Cast<IItemWidget>(PopupWidgetInstance))
-				{
-					ItemWidgetInterface->Execute_SetVisibility(PopupWidgetInstance, true);
-					if (ItemData)
-					{
-						ItemWidgetInterface->Execute_SendItemData(PopupWidgetInstance, ItemData);
-					}
-				}*/
-			}
+			PopupWidget->SetVisibility(true);
 		}
 	}
 }
@@ -86,10 +63,9 @@ void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	if (ARPGCharacter)
 	{
 		ARPGCharacter->SetOverlappingItem(nullptr);
-		if (PopupWidgetInstance)
+		if (PopupWidget)
 		{
-			PopupWidgetInstance->RemoveFromParent();
-			PopupWidgetInstance = nullptr;
+			PopupWidget->SetVisibility(false);
 		}
 	}
 }
@@ -101,4 +77,3 @@ void AItem::Tick(float DeltaTime)
 	RunningTime += DeltaTime;
 	
 }
-

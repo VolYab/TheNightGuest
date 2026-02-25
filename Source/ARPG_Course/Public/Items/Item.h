@@ -28,7 +28,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     class UStaticMeshComponent* ItemMesh;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	class UWidgetComponent* PopupWidget;
 
 	EItemState ItemState = EItemState::EIS_Hovering;
@@ -41,14 +41,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	class USphereComponent* CollisionSphere;
-
-	/** Widget Blueprint reference to be set in the editor */
-	UPROPERTY(EditAnywhere, Category = "UI")
-	TSubclassOf<UUserWidget> PopupWidgetClass;
-
-	/** The actual instance of the created widget */
-	UPROPERTY()
-	UUserWidget* PopupWidgetInstance;
 	
 	UPROPERTY(BlueprintReadWrite)
 	class UItemDataAsset* ItemData;
@@ -73,7 +65,5 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	float RunningTime;
-
-
-
+	
 };
