@@ -49,7 +49,7 @@ void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 	if (ARPGCharacter)
 	{
 		ARPGCharacter->SetOverlappingItem(this);
-		if (PopupWidget)
+		if (PopupWidget && ItemState != EItemState::EIS_Equipped)
 		{
 			PopupWidget->SetVisibility(true);
 		}
