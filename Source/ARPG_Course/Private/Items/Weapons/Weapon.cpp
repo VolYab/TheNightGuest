@@ -4,9 +4,11 @@
 #include "Items/Weapons/Weapon.h"
 #include "Characters/ARPGCharacter.h"
 #include "MovieSceneTracksComponentTypes.h"
+#include "Breakable/BreakableActor.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/BoxComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Interfaces/HitInterface.h"
 
@@ -43,7 +45,7 @@ void AWeapon::BeginPlay()
 void AWeapon::AttachMeshToSocket(USceneComponent* InParent, FName InSocketName)
 {
 	FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
-	ItemMesh->AttachToComponent(InParent, TransformRules, InSocketName);
+	StaticMesh->AttachToComponent(InParent, TransformRules, InSocketName);
 }
 
 /*
@@ -62,6 +64,7 @@ void AWeapon::Equip(USceneComponent* InParent, FName InSocketName)
 	{
 		 CollisionSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+	PopupWidget->SetVisibility(false);
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -103,21 +106,19 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
 		HitResult,
 		true
 		);
 
 	if (HitResult.GetActor())
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("HitResult is Actor -  %s"), *HitResult.GetActor()->GetName());
 		IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
-		if (HitInterface)
-		{
-			//UE_LOG(LogTemp, Warning, TEXT("IS HitInterface - %s"), *HitResult.GetActor()->GetName());
-			HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint);
-			CreateFields(HitResult.ImpactPoint);
-		}
+        if (HitInterface)
+        {
+        	HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint);
+        	CreateFields(HitResult.ImpactPoint);
+        }
 		IgnoreActors.AddUnique(HitResult.GetActor());
 		
 	}

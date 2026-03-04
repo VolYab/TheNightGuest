@@ -22,10 +22,6 @@ class ARPG_COURSE_API IItemWidget
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-
-	UFUNCTION(BlueprintNativeEvent)
-	void SetVisibility(bool bVisible);
-
 	UFUNCTION(BlueprintNativeEvent)
 	void SendItemData(class UItemDataAsset* ItemDataAsset);
 };

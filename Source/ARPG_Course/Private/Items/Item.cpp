@@ -6,14 +6,16 @@
 #include "Components/SphereComponent.h"
 #include "Characters/ARPGCharacter.h"
 #include "Components/WidgetComponent.h"
+#include "DataAssets/ItemDataAsset.h"
+#include "Widgets/ItemPopupWidget.h"
 
 
 AItem::AItem()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
-	RootComponent = ItemMesh;
+	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
+	RootComponent = StaticMesh;
 
 	CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
 	CollisionSphere->SetupAttachment(GetRootComponent());
@@ -30,6 +32,11 @@ void AItem::BeginPlay()
 	//Add bind a callback function to a delegate
 	CollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnSphereOverlap);
 	CollisionSphere->OnComponentEndOverlap.AddDynamic(this, &AItem::OnSphereEndOverlap);
+
+	if (UItemPopupWidget* Widget = Cast<UItemPopupWidget>(PopupWidget->GetWidget()))
+	{
+		Widget->Execute_SendItemData(Widget, ItemData);
+	}
 }
 
 float AItem::TransformedSin()
@@ -49,7 +56,7 @@ void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 	if (ARPGCharacter)
 	{
 		ARPGCharacter->SetOverlappingItem(this);
-		if (PopupWidget)
+		if (PopupWidget && ItemState != EItemState::EIS_Equipped)
 		{
 			PopupWidget->SetVisibility(true);
 		}

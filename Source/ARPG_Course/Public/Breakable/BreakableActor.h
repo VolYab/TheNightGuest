@@ -28,7 +28,23 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	class UCapsuleComponent* Capsule;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bIsBroken = false;
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Treasures")
 	TArray<TSubclassOf<class ATreasure>> SpawnedTreasures;
+
+/* GETTERS AND SETTERS */
+public:
+	bool GetIsBroken() const
+	{
+		return bIsBroken;
+	}
+
+	void SetIsBroken(bool bBroken)
+	{
+		this->bIsBroken = bBroken;
+	}	
 };

@@ -49,4 +49,5 @@ void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint)
 		int32 SelectedTreasure = FMath::RandRange(0, SpawnedTreasures.Num() - 1);
 		World->SpawnActor<ATreasure>(SpawnedTreasures[SelectedTreasure], GetActorLocation(), GetActorRotation());
 	}
+	SetIsBroken(true);
 }
