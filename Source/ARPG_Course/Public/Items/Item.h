@@ -26,7 +26,7 @@ public:
 protected:
 	/*  VARIABLES  */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    class UStaticMeshComponent* ItemMesh;
+    class UStaticMeshComponent* StaticMesh;
 
 	UPROPERTY(VisibleAnywhere)
 	class UWidgetComponent* PopupWidget;
@@ -42,7 +42,7 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class USphereComponent* CollisionSphere;
 	
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ExposeOnSpawn="true"))
 	class UItemDataAsset* ItemData;
 	/*  END VARIABLES  */
 	

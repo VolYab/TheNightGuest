@@ -45,7 +45,7 @@ void AWeapon::BeginPlay()
 void AWeapon::AttachMeshToSocket(USceneComponent* InParent, FName InSocketName)
 {
 	FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
-	ItemMesh->AttachToComponent(InParent, TransformRules, InSocketName);
+	StaticMesh->AttachToComponent(InParent, TransformRules, InSocketName);
 }
 
 /*
