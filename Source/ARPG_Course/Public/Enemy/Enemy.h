@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/HitInterface.h"
+#include "Characters/CharacterTypes.h"
 #include "Enemy.generated.h"
 
 class UAnimMontage;
@@ -25,8 +26,12 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 protected:
+	UPROPERTY(BlueprintReadOnly)
+	EDeadPose DeadPose = EDeadPose::EAS_Alive;
+	
 	virtual void BeginPlay() override;
 
+	void Die();
 	/*
 	 * PlayMontages functions
 	 */
@@ -37,6 +42,9 @@ private:
 	// Animation montages
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 	UAnimMontage* HitReactMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Montages")
+	UAnimMontage* DeathMontage;
 
 	UPROPERTY(EditAnywhere, Category = "Sounds")
 	USoundBase* HitSound;
@@ -50,10 +58,16 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
 
+	UPROPERTY()
+	AActor* CombatTarget;
+
+	UPROPERTY(EditAnywhere)
+	double CombatRadius = 500.f;
 	/* END VARIABLES */
 
 	/* START FUNCTIONS */
 	void ConfigureCollisionResponces();
+	FName CalculateHitDirection(const FVector& ImpactPoint);
 	/* END FUNCTIONS */
 //Getters and Setters
 public:

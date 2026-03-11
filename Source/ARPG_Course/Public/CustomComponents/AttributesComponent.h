@@ -14,9 +14,9 @@ class ARPG_COURSE_API UAttributesComponent : public UActorComponent
 
 public:	
 	UAttributesComponent();
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+	bool IsAlive() const;
 protected:
 	//VARIABLES
 	UPROPERTY(EditAnywhere, Category = "Actor attributes")
@@ -27,7 +27,7 @@ protected:
 
 	//FUNCTIONS
 	virtual void BeginPlay() override;
-
+	
 // GETTERS AND SETTERS
 public:
 	float GetCurrentHealth() const;
