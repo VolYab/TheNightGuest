@@ -48,11 +48,15 @@ void AWeapon::AttachMeshToSocket(USceneComponent* InParent, FName InSocketName)
 	StaticMesh->AttachToComponent(InParent, TransformRules, InSocketName);
 }
 
+
+
 /*
- * This function equips item from world
+ * This function equips item from the world
  */
-void AWeapon::Equip(USceneComponent* InParent, FName InSocketName)
+void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
 {
+	SetOwner(NewOwner);
+	SetInstigator(NewInstigator);
 	AttachMeshToSocket(InParent, InSocketName);
 	ItemState = EItemState::EIS_Equipped;
 	//Play sound when equip
@@ -120,6 +124,6 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
         	CreateFields(HitResult.ImpactPoint);
         }
 		IgnoreActors.AddUnique(HitResult.GetActor());
-		
+		UGameplayStatics::ApplyDamage(HitResult.GetActor(), WeaponDamage, GetInstigatorController(), this, UDamageType::StaticClass());
 	}
 }

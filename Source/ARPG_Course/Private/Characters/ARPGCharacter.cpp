@@ -112,7 +112,7 @@ void AARPGCharacter::EKeyPressed()
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
 	if (OverlappingWeapon && CharacterState == ECharacterState::ECS_Unequipped)
 	{
-		OverlappingWeapon->Equip(GetMesh(), FName("HandGrip_R"));
+		OverlappingWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
 		SetOverlappingItem(nullptr);
 		EquippedWeapon = OverlappingWeapon;
 		SetCharacterState();
@@ -198,7 +198,7 @@ void AARPGCharacter::Disarm()
 {
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->Equip(GetMesh(), FName("SpineWeaponSocket"));
+		EquippedWeapon->Equip(GetMesh(), FName("SpineWeaponSocket"), this, this);
 	}
 }
 
@@ -206,7 +206,7 @@ void AARPGCharacter::Arm()
 {
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->Equip(GetMesh(), FName("HandGrip_R"));
+		EquippedWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
 	}
 }
 

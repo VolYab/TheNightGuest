@@ -8,6 +8,9 @@
 #include "Enemy.generated.h"
 
 class UAnimMontage;
+class UAttributesComponent;
+class UWidgetComponent;
+class UHealthBarComponent;
 
 UCLASS()
 class ARPG_COURSE_API AEnemy : public ACharacter, public IHitInterface
@@ -19,8 +22,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	void DirectionalHitReact(const FVector& ImpactPoint);
-
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 protected:
 	virtual void BeginPlay() override;
 
@@ -30,6 +33,7 @@ protected:
 	void PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName = "");
 
 private:
+	/* START VARIABLES */
 	// Animation montages
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 	UAnimMontage* HitReactMontage;
@@ -39,9 +43,18 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Cascade Effects")
 	UParticleSystem* HitEffect;
-	
-	void ConfigureCollisionResponces();
 
+	UPROPERTY(VisibleAnywhere)
+	UAttributesComponent* AttributeComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	UHealthBarComponent* HealthBarWidget;
+
+	/* END VARIABLES */
+
+	/* START FUNCTIONS */
+	void ConfigureCollisionResponces();
+	/* END FUNCTIONS */
 //Getters and Setters
 public:
 	

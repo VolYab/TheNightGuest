@@ -23,7 +23,7 @@ class ARPG_COURSE_API AWeapon : public AItem
 public:
 	AWeapon();
 	void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName);
-	void Equip(USceneComponent* InParent, FName InSocketName);
+	void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
 	TArray<AActor*> IgnoreActors;
 
@@ -53,6 +53,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* TraceBoxEnd;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon properties")
+	float WeaponDamage = 20.f;
 //Getters and Setters
 public:
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
