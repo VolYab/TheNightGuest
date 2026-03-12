@@ -25,12 +25,26 @@ AEnemy::AEnemy()
 void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+	if (HealthBarWidget)
+	{
+		HealthBarWidget->SetVisibility(false);
+	}
 }
 
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (CombatTarget)
+	{
+		const double DistanceToTarget = (CombatTarget->GetActorLocation() - GetActorLocation()).Size();
+		if (DistanceToTarget > CombatRadius)
+		{
+			CombatTarget = nullptr;
+			if (HealthBarWidget)
+			{HealthBarWidget->SetVisibility(false);}
+		}
+	}
 }
 
 void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -41,8 +55,11 @@ void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 {
+	if (HealthBarWidget)
+	{
+		HealthBarWidget->SetVisibility(true);
+	}
 	DirectionalHitReact(ImpactPoint);
-
 	if (HitSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, ImpactPoint);
@@ -64,6 +81,7 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 			HealthBarWidget->SetHealthPercent(AttributeComponent->GetCurrentHealth() / AttributeComponent->GetMaxHealth());
 		}
 	}
+	CombatTarget = EventInstigator->GetPawn();
 	return DamageAmount;
 }
 
@@ -79,7 +97,7 @@ void AEnemy::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionNa
 		}
 		else
 		{
-			//Check number of sections in AnimMontage to generate random index
+			//Check number of sections in AnimMontage to generate a random index
 			const int32 NumberOfSections = AnimMontageToPlay->GetNumSections() - 1;
 			const int32 RandomSectionIndex = FMath::RandRange(0, NumberOfSections);
 			//Get Section Name using random index
@@ -98,11 +116,11 @@ void AEnemy::ConfigureCollisionResponces()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
-void AEnemy::DirectionalHitReact(const FVector& ImpactPoint)
+FName AEnemy::CalculateHitDirection(const FVector& ImpactPoint)
 {
 	/*
-	 * To play montage based on hit direction, calculate angle between Forward vector and HitImpact Vector
-	 * To calculate angle between Forward vector and HitImpact Vector, DotProduct is used
+	 * To play montage based on a hit direction, calculate an angle between Forward vector and HitImpact Vector
+	 * To calculate an angle between Forward vector and HitImpact Vector, DotProduct is used
 	 * Formula is - DotProduct = |a|*|b|*cos(θ)
 	 * As vectors are normalised - so |a|=0 and |b|=0
 	 * So cos(θ) = DotProduct
@@ -114,7 +132,7 @@ void AEnemy::DirectionalHitReact(const FVector& ImpactPoint)
 	//convert radians to degrees
 	double Theta = FMath::RadiansToDegrees(FMath::Acos(DotProduct));
 
-	//if cross product vector points down - theta should be negative
+	//if the cross-product vector points down - theta should be negative
 	FVector CrossProduct = FVector::CrossProduct(GetActorForwardVector(), ToHitVector);
 	if (CrossProduct.Z < 0)
 	{
@@ -132,6 +150,59 @@ void AEnemy::DirectionalHitReact(const FVector& ImpactPoint)
 	{
 		AnimSectionName = FName("FromLeft");
 	}
+	return AnimSectionName;
+}
+
+void AEnemy::DirectionalHitReact(const FVector& ImpactPoint)
+{
+	FName AnimSectionName = CalculateHitDirection(ImpactPoint);
+	if (AttributeComponent && AttributeComponent->IsAlive())
+	{
+		PlayMontage(HitReactMontage, AnimSectionName);
+	}
+	else
+	{
+		if(AnimSectionName == "FromFront")
+		{
+			DeadPose = EDeadPose::EAS_DeadBackward;
+		} else if (AnimSectionName == "FromRight")
+		{
+			DeadPose = EDeadPose::EAS_DeadLeft;
+		} else if (AnimSectionName == "FromLeft")
+		{
+			DeadPose = EDeadPose::EAS_DeadRight;
+		} else
+		{
+			DeadPose = EDeadPose::EAS_DeadForward;
+		}
+		Die();
+	}
 	
-	PlayMontage(HitReactMontage, AnimSectionName);
+	
+}
+
+void AEnemy::Die()
+{
+	FName AnimSectionName;
+	switch (DeadPose)
+	{
+	case EDeadPose::EAS_DeadForward:
+		AnimSectionName = FName("FromBack");
+		break;
+	case EDeadPose::EAS_DeadRight:
+		AnimSectionName = FName("FromLeft");
+		break;
+	case EDeadPose::EAS_DeadLeft:
+		AnimSectionName = FName("FromRight");
+		break;
+	default:
+		AnimSectionName = FName("FromFront");
+	}
+	PlayMontage(DeathMontage, AnimSectionName);
+	if (HealthBarWidget)
+	{
+		HealthBarWidget->SetVisibility(false);
+	}
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SetLifeSpan(3.f);
 }

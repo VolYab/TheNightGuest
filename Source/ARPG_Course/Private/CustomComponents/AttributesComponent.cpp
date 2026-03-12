@@ -44,3 +44,8 @@ void UAttributesComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 }
 
+bool UAttributesComponent::IsAlive() const
+{
+	return CurrentHealth > 0;
+}
+
