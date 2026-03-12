@@ -49,6 +49,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Sounds")
 	USoundBase* HitSound;
 
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundBase* HitMoanSound;
+
 	UPROPERTY(EditAnywhere, Category = "Cascade Effects")
 	UParticleSystem* HitEffect;
 
