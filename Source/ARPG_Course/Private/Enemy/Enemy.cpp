@@ -64,6 +64,10 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, ImpactPoint);
 	}
+	if (HitMoanSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitMoanSound, ImpactPoint);
+	}
 	if (HitEffect)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, ImpactPoint, FRotator(90.f, ImpactPoint.Y, ImpactPoint.Z));
