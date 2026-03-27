@@ -12,6 +12,7 @@ class UAnimMontage;
 class UAttributesComponent;
 class UWidgetComponent;
 class UHealthBarComponent;
+class UPatrolComponent;
 
 UCLASS()
 class ARPG_COURSE_API AEnemy : public ACharacter, public IHitInterface
@@ -32,6 +33,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	void Die();
+	bool TargetInRange(AActor* Target, float RangeRadius);
 	/*
 	 * PlayMontages functions
 	 */
@@ -59,6 +61,9 @@ private:
 	UAttributesComponent* AttributeComponent;
 
 	UPROPERTY(VisibleAnywhere)
+	UPatrolComponent* PatrolComponent;
+
+	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
 
 	UPROPERTY()
@@ -66,6 +71,7 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	double CombatRadius = 500.f;
+	
 	/* END VARIABLES */
 
 	/* START FUNCTIONS */

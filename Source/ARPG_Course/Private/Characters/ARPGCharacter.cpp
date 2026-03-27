@@ -90,7 +90,7 @@ void AARPGCharacter::Move(const FInputActionValue& Value)
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 	// Forward / Backward
-	if (CharacterState == ECharacterState::ECS_EquippedTwoHandedWeapon)
+	if (CharacterState == ECharacterState::ECS_EquippedTwoHandedWeapon || CharacterState == ECharacterState::ECS_EquippedTwoHandedSpear)
 	{
 		MovementVector = MovementVector / 3;
 	}

@@ -4,12 +4,14 @@
 #include "Enemy/Enemy.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "CustomComponents/AttributesComponent.h"
+#include "CustomComponents/PatrolComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Widgets/HealthBarComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "ARPG_Course/DebugMacros.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
-#include "CustomComponents/AttributesComponent.h"
-#include "Components/WidgetComponent.h"
-#include "Widgets/HealthBarComponent.h"
 
 AEnemy::AEnemy()
 {
@@ -18,8 +20,16 @@ AEnemy::AEnemy()
 	ConfigureCollisionResponces();
 
 	AttributeComponent = CreateDefaultSubobject<UAttributesComponent>(TEXT("AttributesComponent"));
+	PatrolComponent = CreateDefaultSubobject<UPatrolComponent>(TEXT("PatrolComponent"));
 	HealthBarWidget = CreateDefaultSubobject<UHealthBarComponent>(TEXT("HealthBarComponent"));
 	HealthBarWidget->SetupAttachment(GetRootComponent());
+
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+
+	
 }
 
 void AEnemy::BeginPlay()
@@ -37,8 +47,7 @@ void AEnemy::Tick(float DeltaTime)
 
 	if (CombatTarget)
 	{
-		const double DistanceToTarget = (CombatTarget->GetActorLocation() - GetActorLocation()).Size();
-		if (DistanceToTarget > CombatRadius)
+		if (!TargetInRange(CombatTarget, CombatRadius))
 		{
 			CombatTarget = nullptr;
 			if (HealthBarWidget)
@@ -209,4 +218,10 @@ void AEnemy::Die()
 	}
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetLifeSpan(3.f);
+}
+
+bool AEnemy::TargetInRange(AActor* Target, float RangeRadius)
+{
+	const double DistanceToTarget = (Target->GetActorLocation() - GetActorLocation()).Size();
+	return DistanceToTarget <= RangeRadius;
 }

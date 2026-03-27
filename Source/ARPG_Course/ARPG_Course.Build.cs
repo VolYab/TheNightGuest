@@ -8,7 +8,7 @@ public class ARPG_Course : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara", "GeometryCollectionEngine", "UMG" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara", "GeometryCollectionEngine", "UMG", "AIModule" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
