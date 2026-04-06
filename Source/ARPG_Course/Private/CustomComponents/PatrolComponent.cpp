@@ -23,13 +23,9 @@ void UPatrolComponent::BeginPlay()
 	{
 		if (!CurrentPatrolTarget)
 		{
-			SetCurrentPatrolTarget(PatrolTargets[0]);
+			SetCurrentPatrolTarget(GetRandomPatrolTarget());
 		}
-		FAIMoveRequest MoveRequest;
-		MoveRequest.SetGoalActor(CurrentPatrolTarget);
-		MoveRequest.SetAcceptanceRadius(15.f);
-		FNavPathSharedPtr NavPath;
-		AIEnemyController->MoveTo(MoveRequest, &NavPath);
+		GoToTarget(CurrentPatrolTarget);
 	}
 }
 
@@ -38,25 +34,23 @@ void UPatrolComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	PatrolPoints();
+	//PatrolPoints();
 }
 
 void UPatrolComponent::PatrolPoints()
 {
-	if (AIEnemyController && CurrentPatrolTarget)
+    //Check if the patrolling actor reached CurrentPatrolTarget
+    if (PatrolPointReached(CurrentPatrolTarget, PatrolRadius))
     {
-    	//Check if the patrolling actor reached CurrentPatrolTarget
-    	if (PatrolPointReached(CurrentPatrolTarget, PatrolRadius))
-    	{
-    		SetCurrentPatrolTarget(GetRandomPatrolTarget());
-    		GoToTarget(CurrentPatrolTarget);
-    	}
+    	UE_LOG(LogTemp, Warning, TEXT("PatrolPointReached"));
+    	SetCurrentPatrolTarget(GetRandomPatrolTarget());
+    	GetOwner()->GetWorldTimerManager().SetTimer(PatrolTimer, this, &UPatrolComponent::PatrolTimerFinished, 5.f);
     }
 }
 
 void UPatrolComponent::GoToTarget(AActor* Target)
 {
-	if (AIEnemyController)
+	if (AIEnemyController && Target)
 	{
 		FAIMoveRequest MoveRequest;
         MoveRequest.SetGoalActor(Target);
@@ -91,8 +85,22 @@ AActor* UPatrolComponent::GetRandomPatrolTarget()
 			ValidTargets.AddUnique(Target);
 		}
 	}
-	int32 TargetNumber = FMath::RandRange(0, ValidTargets.Num() - 1);
-	return ValidTargets[TargetNumber];
+	if (ValidTargets.Num() != 0)
+	{
+		int32 TargetNumber = FMath::RandRange(0, ValidTargets.Num() - 1);
+		return ValidTargets[TargetNumber];
+	}
+	return nullptr;
+}
+
+void UPatrolComponent::PatrolTimerFinished()
+{
+	GoToTarget(CurrentPatrolTarget);
+}
+
+void UPatrolComponent::ClearPatrolTimer()
+{
+	GetOwner()->GetWorldTimerManager().ClearTimer(PatrolTimer);
 }
 
 class AAIController* UPatrolComponent::GetAIEnemyController() const

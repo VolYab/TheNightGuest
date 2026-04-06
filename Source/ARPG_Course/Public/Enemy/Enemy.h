@@ -12,7 +12,6 @@ class UAnimMontage;
 class UAttributesComponent;
 class UWidgetComponent;
 class UHealthBarComponent;
-class UPatrolComponent;
 
 UCLASS()
 class ARPG_COURSE_API AEnemy : public ACharacter, public IHitInterface
@@ -29,7 +28,7 @@ public:
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	EDeadPose DeadPose = EDeadPose::EAS_Alive;
-	
+
 	virtual void BeginPlay() override;
 
 	void Die();
@@ -40,44 +39,55 @@ protected:
 	void PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName = "");
 
 private:
-	/* START VARIABLES */
-	// Animation montages
+	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+	/*
+	 * Animation montages
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 	UAnimMontage* HitReactMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 	UAnimMontage* DeathMontage;
 
+	/*
+	 * SOUNDS
+	 */
 	UPROPERTY(EditAnywhere, Category = "Sounds")
 	USoundBase* HitSound;
 
 	UPROPERTY(EditAnywhere, Category = "Sounds")
 	USoundBase* HitMoanSound;
 
+	/*
+	 * EFFECTS
+	 */
 	UPROPERTY(EditAnywhere, Category = "Cascade Effects")
 	UParticleSystem* HitEffect;
 
+	/*
+	 * COMPONENTS
+	 */
 	UPROPERTY(VisibleAnywhere)
 	UAttributesComponent* AttributeComponent;
 
 	UPROPERTY(VisibleAnywhere)
-	UPatrolComponent* PatrolComponent;
-
-	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
 
-	UPROPERTY()
+	/*
+	 * COMBAT
+	 */
+	UPROPERTY(VisibleAnywhere)
 	AActor* CombatTarget;
 
 	UPROPERTY(EditAnywhere)
 	double CombatRadius = 500.f;
-	
-	/* END VARIABLES */
 
-	/* START FUNCTIONS */
-	void ConfigureCollisionResponces();
+	UPROPERTY(EditAnywhere)
+	double AttackRadius = 150.f;
+	
 	FName CalculateHitDirection(const FVector& ImpactPoint);
-	/* END FUNCTIONS */
+	
+	void ConfigureCollisionResponces();
 //Getters and Setters
 public:
 	

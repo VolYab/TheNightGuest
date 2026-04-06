@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "CharacterTypes.h"
+#include "GenericTeamAgentInterface.h"
 #include "ARPGCharacter.generated.h"
 
 class UInputMappingContext;
@@ -17,7 +18,7 @@ class UAnimMontage;
 class AWeapon;
 
 UCLASS()
-class ARPG_COURSE_API AARPGCharacter : public ACharacter
+class ARPG_COURSE_API AARPGCharacter : public ACharacter, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -29,7 +30,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetEnableBoxCollision(ECollisionEnabled::Type BoxCollisionEnabled);
-	
+
+	virtual void PossessedBy(AController* NewController) override;
 protected:
 	virtual void BeginPlay() override;
 
@@ -84,6 +86,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ArmEnd();
 private:
+	UPROPERTY(VisibleAnywhere)
+	FGenericTeamId TeamId;
+	
 	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 
@@ -110,7 +115,11 @@ private:
 	UAnimMontage* ArmDisarmMontage;
 
 public:
+	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamId) override {if (TeamId != NewTeamId){TeamId = NewTeamId;}};
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
+
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
+
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	void SetCharacterState();
 };

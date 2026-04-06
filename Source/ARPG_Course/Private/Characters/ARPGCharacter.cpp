@@ -10,6 +10,7 @@
 #include "Items/Item.h"
 #include "Items/Weapons/Weapon.h"
 #include "Animation/AnimMontage.h"
+#include "Characters/ARPGPlayerController.h"
 #include "Components/BoxComponent.h"
 
 AARPGCharacter::AARPGCharacter()
@@ -45,6 +46,7 @@ void AARPGCharacter::BeginPlay()
 			Subsystem->AddMappingContext(InputActionContext, 0);
 		}
 	}
+	Tags.Add(FName("ARPGCharacter"));
 }
 
 void AARPGCharacter::Tick(float DeltaTime)
@@ -72,6 +74,16 @@ void AARPGCharacter::SetEnableBoxCollision(ECollisionEnabled::Type BoxCollisionE
 	{
 		EquippedWeapon->GetWeaponBoxComponent()->SetCollisionEnabled(BoxCollisionEnabled);
 		EquippedWeapon->IgnoreActors.Empty();
+	}
+}
+
+void AARPGCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (IGenericTeamAgentInterface* ControllerAsTeamProvider = Cast<IGenericTeamAgentInterface>(NewController))
+	{
+		TeamId = ControllerAsTeamProvider->GetGenericTeamId();
 	}
 }
 

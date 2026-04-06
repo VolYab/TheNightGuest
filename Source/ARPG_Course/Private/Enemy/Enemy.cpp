@@ -5,12 +5,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "CustomComponents/AttributesComponent.h"
-#include "CustomComponents/PatrolComponent.h"
-#include "Components/WidgetComponent.h"
 #include "Widgets/HealthBarComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "ARPG_Course/DebugMacros.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
 AEnemy::AEnemy()
@@ -20,7 +16,6 @@ AEnemy::AEnemy()
 	ConfigureCollisionResponces();
 
 	AttributeComponent = CreateDefaultSubobject<UAttributesComponent>(TEXT("AttributesComponent"));
-	PatrolComponent = CreateDefaultSubobject<UPatrolComponent>(TEXT("PatrolComponent"));
 	HealthBarWidget = CreateDefaultSubobject<UHealthBarComponent>(TEXT("HealthBarComponent"));
 	HealthBarWidget->SetupAttachment(GetRootComponent());
 
@@ -29,7 +24,6 @@ AEnemy::AEnemy()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	
 }
 
 void AEnemy::BeginPlay()
@@ -45,13 +39,13 @@ void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (CombatTarget)
+	//if target is not in chasing (combat) radius - reset CombatTarget, send Enemy patrolling
+	if (!TargetInRange(CombatTarget, CombatRadius))
 	{
-		if (!TargetInRange(CombatTarget, CombatRadius))
+		CombatTarget = nullptr;
+		if (HealthBarWidget)
 		{
-			CombatTarget = nullptr;
-			if (HealthBarWidget)
-			{HealthBarWidget->SetVisibility(false);}
+			HealthBarWidget->SetVisibility(false);
 		}
 	}
 }
@@ -110,10 +104,10 @@ void AEnemy::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionNa
 		}
 		else
 		{
-			//Check number of sections in AnimMontage to generate a random index
+			//Check the number of sections in AnimMontage to generate a random index
 			const int32 NumberOfSections = AnimMontageToPlay->GetNumSections() - 1;
 			const int32 RandomSectionIndex = FMath::RandRange(0, NumberOfSections);
-			//Get Section Name using random index
+			//Get Section Name using a random index
 			const FName RandomSectionName = AnimMontageToPlay->GetSectionName(RandomSectionIndex);
 			AnimInstance->Montage_JumpToSection(RandomSectionName, AnimMontageToPlay);
 		}
@@ -190,8 +184,6 @@ void AEnemy::DirectionalHitReact(const FVector& ImpactPoint)
 		}
 		Die();
 	}
-	
-	
 }
 
 void AEnemy::Die()
@@ -222,6 +214,7 @@ void AEnemy::Die()
 
 bool AEnemy::TargetInRange(AActor* Target, float RangeRadius)
 {
+	if (Target == nullptr) return false;
 	const double DistanceToTarget = (Target->GetActorLocation() - GetActorLocation()).Size();
-	return DistanceToTarget <= RangeRadius;
+	return DistanceToTarget <= RangeRadius;	
 }

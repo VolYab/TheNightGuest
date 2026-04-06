@@ -18,10 +18,10 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	void PatrolPoints();
-	
+	void GoToTarget(AActor* Target);
+	void ClearPatrolTimer();
 protected:
 	virtual void BeginPlay() override;
-	void GoToTarget(AActor* Target);
     void GoToRandomPoint();
     bool PatrolPointReached(AActor* PatrolPoint, float RangeRadius) const;
     AActor* GetRandomPatrolTarget();
@@ -39,6 +39,11 @@ private:
 	UPROPERTY(EditAnywhere, Category="AI Navigation")
 	double PatrolRadius = 100.f;
 
+	FTimerHandle PatrolTimer;
+
+	/*Functions*/
+	void PatrolTimerFinished();
+
 // GETTERS AND SETTERS
 public:
 	class AAIController* GetAIEnemyController() const;
@@ -49,5 +54,4 @@ public:
 	void SetPatrolTargets(const TArray<AActor*>& NewPatrolTargets);
 	double GetPatrolRadius() const;
 	void SetPatrolRadius(double NewPatrolRadius);
-	
 };
