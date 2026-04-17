@@ -2,10 +2,9 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "BaseCharacter.h"
 #include "InputActionValue.h"
-#include "CharacterTypes.h"
+#include "GenericTeamAgentInterface.h"
 #include "ARPGCharacter.generated.h"
 
 class UInputMappingContext;
@@ -13,11 +12,10 @@ class UInputAction;
 class USpringArmComponent;
 class UCameraComponent;
 class AItem;
-class UAnimMontage;
-class AWeapon;
+
 
 UCLASS()
-class ARPG_COURSE_API AARPGCharacter : public ACharacter
+class ARPG_COURSE_API AARPGCharacter : public ABaseCharacter, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -27,9 +25,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION(BlueprintCallable)
-	void SetEnableBoxCollision(ECollisionEnabled::Type BoxCollisionEnabled);
-	
+	virtual void PossessedBy(AController* NewController) override;
 protected:
 	virtual void BeginPlay() override;
 
@@ -60,18 +56,13 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Lookout(const FInputActionValue& Value);
 	void EKeyPressed();
-	void Attack();
+	virtual void Attack() override;
 
 	/*
 	 * PlayMontages functions
 	 */
-	void PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName = "");
-	//void PlayAttackMontage();
-	//void PlayArmDisarmMontage();
-
-	UFUNCTION(BlueprintCallable)
-	void AttackEnd();
-	bool CanAttack();
+	virtual void PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName = "") override;
+	
 	bool CanDisarm();
 	bool CanArm();
 
@@ -84,8 +75,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ArmEnd();
 private:
-	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
-	EActionState ActionState = EActionState::EAS_Unoccupied;
+	UPROPERTY(VisibleAnywhere)
+	FGenericTeamId TeamId;
 
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArm;
@@ -96,18 +87,10 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	AItem* OverlappingItem;
 
-	UPROPERTY(VisibleAnywhere, Category="Weapon")
-	AWeapon* EquippedWeapon;
-
-	// Animation montages
-	UPROPERTY(EditDefaultsOnly, Category = "Montages")
-	UAnimMontage* AttackMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Montages")
-	UAnimMontage* ArmDisarmMontage;
-
 public:
+	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamId) override {if (TeamId != NewTeamId){TeamId = NewTeamId;}};
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
+
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
-	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
-	void SetCharacterState();
+	
 };

@@ -12,7 +12,9 @@ UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
 	EWT_1HSword UMETA(DisplayName = "One-Handed Sword"),
-	EWT_2HSword UMETA(DisplayName = "Two-Handed Sword")
+	EWT_2HSword UMETA(DisplayName = "Two-Handed Sword"),
+	EWT_1HSpear UMETA(DisplayName = "One-Handed Spear"),
+	EWT_2HSpear UMETA(DisplayName = "Two-Handed Spear")
 };
 
 UCLASS()
@@ -56,6 +58,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Weapon properties")
 	float WeaponDamage = 20.f;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon properties")
+	float AttackRange = 100.f;
 //Getters and Setters
 public:
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
