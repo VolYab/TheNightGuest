@@ -9,9 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Items/Item.h"
 #include "Items/Weapons/Weapon.h"
-#include "Animation/AnimMontage.h"
 #include "Characters/ARPGPlayerController.h"
-#include "Components/BoxComponent.h"
 
 AARPGCharacter::AARPGCharacter()
 {
@@ -65,15 +63,6 @@ void AARPGCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(EKeyPressedAction, ETriggerEvent::Triggered, this, &AARPGCharacter::EKeyPressed);
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AARPGCharacter::Attack);
-	}
-}
-
-void AARPGCharacter::SetEnableBoxCollision(ECollisionEnabled::Type BoxCollisionEnabled)
-{
-	if (EquippedWeapon && EquippedWeapon->GetWeaponBoxComponent())
-	{
-		EquippedWeapon->GetWeaponBoxComponent()->SetCollisionEnabled(BoxCollisionEnabled);
-		EquippedWeapon->IgnoreActors.Empty();
 	}
 }
 
@@ -210,16 +199,6 @@ void AARPGCharacter::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& S
 	}
 }
 
-void AARPGCharacter::AttackEnd()
-{
-	ActionState = EActionState::EAS_Unoccupied;
-}
-
-bool AARPGCharacter::CanAttack()
-{
-	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped;
-}
-
 bool AARPGCharacter::CanDisarm()
 {
 	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped;
@@ -263,34 +242,4 @@ void AARPGCharacter::Arm()
 void AARPGCharacter::ArmEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
-}
-
-void AARPGCharacter::SetCharacterState()
-{
-	if (EquippedWeapon)
-	{
-		switch (EquippedWeapon->GetWeaponType())
-        {
-        case EWeaponType::EWT_1HSword:
-        	CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
-        	break;
-        case EWeaponType::EWT_2HSword:
-        	CharacterState = ECharacterState::ECS_EquippedTwoHandedWeapon;
-        	break;
-		case EWeaponType::EWT_1HSpear:
-			CharacterState = ECharacterState::ECS_EquippedOneHandedSpear;
-			break;
-		case EWeaponType::EWT_2HSpear:
-			CharacterState = ECharacterState::ECS_EquippedTwoHandedSpear;
-			break;
-        default:
-        	CharacterState = ECharacterState::ECS_Unequipped;
-        	break;
-        }
-	}
-	else
-	{
-		CharacterState = ECharacterState::ECS_Unequipped;
-	}
-	
 }

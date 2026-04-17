@@ -4,33 +4,26 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
-#include "UpdateMovementSpeedTask.generated.h"
+#include "PerformAttack.generated.h"
 
-class AEnemy;
 class AAIController;
+class AEnemy;
 /**
- * StateTree task that changes Enemy's MaxWalkSpeed.
+ * StateTree task that performs Enemy's attack.
  */
-UCLASS(Blueprintable, BlueprintType, meta = (DisplayName = "Update Movement Speed"))
-class ARPG_COURSE_API UUpdateMovementSpeedTask : public UStateTreeTaskBlueprintBase
+UCLASS(Blueprintable, BlueprintType, meta = (DisplayName = "Perform attack"))
+class ARPG_COURSE_API UPerformAttack : public UStateTreeTaskBlueprintBase
 {
 	GENERATED_BODY()
 
 public:
-	/*
-	 * Properties
-	 */
-	/** The Enemy character, whose speed will be updated */
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category=Context, meta = (Context))
+	/** The Enemy character, who performs an attack */
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Context", meta = (Context))
 	TObjectPtr<AEnemy> Actor;
 
 	/** The Enemy AIController */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Context", meta = (Context))
 	TObjectPtr<AAIController> AIController;
-
-	/** Desired max speed to apply */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (ClampMin = "0.0"))
-	float TargetMaxWalkSpeed;
 
 protected:
 	/*
