@@ -42,8 +42,21 @@ public:
 	 */
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 	
-	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
+	ECharacterState GetCharacterState() const
+	{
+		return CharacterState;
+	}
 	void SetCharacterState();
+
+	bool IsAttackMontageEnded() const
+	{
+		return bIsAttackMontageEnded;
+	}
+
+	void SetIsAttackMontageEnded(bool newIsAttackMontageEnded)
+	{
+		this->bIsAttackMontageEnded = newIsAttackMontageEnded;
+	}
 protected:
 	/**
 	 * Properties
@@ -66,6 +79,8 @@ protected:
 	/**
 	 * Animation montages
 	 */
+	bool bIsAttackMontageEnded = false;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Animation|Montages")
 	UAnimMontage* SwordAttackMontage;
 
@@ -130,6 +145,13 @@ protected:
 	 */
 	virtual void PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName = "");
 
+	/**
+	 * Handler to run when the montage is ended
+	 * @param AnimMontage Animation montage which is played
+	 * @param bInterrupted Is montage finished or interrupted
+	 */
+	UFUNCTION()
+	void HandleMontageEnded(UAnimMontage* AnimMontage, bool bInterrupted);
 private:
 
 	/**

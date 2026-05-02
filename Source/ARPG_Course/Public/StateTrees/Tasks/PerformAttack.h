@@ -16,6 +16,12 @@ class ARPG_COURSE_API UPerformAttack : public UStateTreeTaskBlueprintBase
 {
 	GENERATED_BODY()
 
+	// Constructor
+	UPerformAttack(const FObjectInitializer& ObjectInitializer)
+		: Super(ObjectInitializer)
+	{
+		bShouldCallTick = true; // Enables ticking every frame
+	}
 public:
 	/** The Enemy character, who performs an attack */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Context", meta = (Context))
@@ -36,4 +42,25 @@ protected:
 	 * @param Transition The transition result containing information about the state change.
 	*/
 	EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+
+	/**
+	 * Called when state ticks
+	 * @param Context The execution context for the state tree
+	 * @param DeltaTime 
+	 */
+	EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
+
+	/**
+	 * Called when state finishes
+	 * @param Context The execution context for the state tree
+	 * @param Transition The transition that triggered this state
+	 */
+	void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+private:
+	/*
+	 * Properties
+	*/
+
+	// Indicates whether the montage has finished playing
+	bool bIsAttackMontageFinished = false;
 };
