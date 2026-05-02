@@ -68,6 +68,7 @@ void ABaseCharacter::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& S
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && AnimMontageToPlay)
 	{
+		AnimInstance->OnMontageEnded.AddDynamic(this, &ABaseCharacter::HandleMontageEnded);
 		AnimInstance->Montage_Play(AnimMontageToPlay);
 		if (SectionName == "")
 		{
@@ -136,6 +137,16 @@ FName ABaseCharacter::CalculateHitDirection(const FVector& ImpactPoint)
 		DiretionName = FName("FromLeft");
 	}
 	return DiretionName;
+}
+
+void ABaseCharacter::HandleMontageEnded(UAnimMontage* AnimMontage, bool bInterrupted)
+{
+	bIsAttackMontageEnded = true;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && AnimInstance->OnMontageEnded.IsAlreadyBound(this, &ABaseCharacter::HandleMontageEnded))
+	{
+		AnimInstance->OnMontageEnded.RemoveDynamic(this, &ABaseCharacter::HandleMontageEnded);
+	}
 }
 
 void ABaseCharacter::SetEnableBoxCollision(ECollisionEnabled::Type BoxCollisionEnabled)

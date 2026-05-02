@@ -65,5 +65,27 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	float RunningTime;
-	
+
+
+// GETTERS AND SETTERS
+public:
+	class UItemDataAsset* GetItemData() const
+	{
+		return ItemData;
+	}
+
+	void SetItemData(class UItemDataAsset* NewItemData)
+	{
+		this->ItemData = NewItemData;
+	}
+
+	EItemState GetItemState() const
+	{
+		return ItemState;
+	}
+
+	virtual void SetItemState(EItemState NewItemState)
+	{
+		this->ItemState = NewItemState;
+	}
 };

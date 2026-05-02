@@ -62,4 +62,14 @@ public:
 	{
 	    this->ItemImage = Image;
 	}
+
+	TSoftClassPtr<AItem> GetItemClass() const
+	{
+		return ItemClass;
+	}
+
+	void SetItemClass(const TSoftClassPtr<AItem>& NewItemClass)
+	{
+		this->ItemClass = NewItemClass;
+	}
 };

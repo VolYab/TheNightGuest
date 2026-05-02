@@ -5,8 +5,11 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "CustomComponents/AttributesComponent.h"
+#include "DataAssets/ItemDataAsset.h"
+#include "Factories/ItemSpawner.h"
 #include "Widgets/HealthBarComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Items/Weapons/Weapon.h"
 
 AEnemy::AEnemy()
 {
@@ -31,18 +34,18 @@ void AEnemy::BeginPlay()
 	{
 		HealthBarWidget->SetVisibility(false);
 	}
+
+	AWeapon* DefaultWeapon = Cast<AWeapon>(AItemSpawner::SpawnItem(this, DefaultWeaponData));
+	DefaultWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
+	EquippedWeapon = DefaultWeapon;
 }
 
-void AEnemy::Attack()
-{
-	/*Super::Attack();*/
-}
+
 
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	//if target is not in chasing (combat) radius - reset CombatTarget, send Enemy patrolling
+	
 	if (!TargetInRange(CombatTarget, CombatRadius))
 	{
 		CombatTarget = nullptr;
@@ -68,8 +71,17 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 	}
 }
 
+void AEnemy::Destroyed()
+{
+	Super::Destroyed();
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->Destroy();
+	}
+}
+
 float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
-	AActor* DamageCauser)
+                         AActor* DamageCauser)
 {
 	if (AttributeComponent)
 	{
@@ -88,11 +100,21 @@ void AEnemy::PerformAttack()
 	Attack();
 }
 
-void AEnemy::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName)
+void AEnemy::Attack()
+{
+	EnemyState = EEnemyState::EES_Attacking;
+	if (SwordAttackMontage)
+	{
+		PlayMontage(SwordAttackMontage);
+	}
+}
+
+/*void AEnemy::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && AnimMontageToPlay)
 	{
+		AnimInstance->OnMontageEnded.AddDynamic(this, &ABaseCharacter::HandleMontageEnded);
 		AnimInstance->Montage_Play(AnimMontageToPlay);
 		if (SectionName != "")
 		{
@@ -108,7 +130,7 @@ void AEnemy::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionNa
 			AnimInstance->Montage_JumpToSection(RandomSectionName, AnimMontageToPlay);
 		}
 	}
-}
+}*/
 
 void AEnemy::ConfigureCollisionResponces()
 {
@@ -121,11 +143,11 @@ void AEnemy::ConfigureCollisionResponces()
 
 void AEnemy::Die()
 {
-	Super::Die();
 	if (HealthBarWidget)
 	{
 		HealthBarWidget->SetVisibility(false);
 	}
+	Super::Die();
 }
 
 bool AEnemy::TargetInRange(AActor* Target, float RangeRadius)

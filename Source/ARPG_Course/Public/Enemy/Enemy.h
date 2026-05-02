@@ -6,6 +6,7 @@
 #include "Characters/CharacterTypes.h"
 #include "Enemy.generated.h"
 
+class UItemDataAsset;
 class UWidgetComponent;
 class UHealthBarComponent;
 
@@ -23,6 +24,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+	virtual void Destroyed() override;
 
 	/**
 	 * This function calculates damage on Health of an actor, updates health bar
@@ -35,7 +37,7 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	/**
-	 * This is general a function to perform attack using an Equipped weapon 
+	 * This is a public function for StateTreeTask to call to perform attack using an Equipped weapon 
 	 */
 	void PerformAttack();
 protected:
@@ -70,8 +72,8 @@ protected:
 	 * This function plays animation montage
 	 * @param AnimMontageToPlay Montage to play.
 	 * @param SectionName Section name in montage to play, if provided. If not provided - a random section will be played.
-	 */
-	virtual void PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName = "") override;
+	 
+	virtual void PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName = "") override;*/
 
 private:
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
@@ -97,6 +99,8 @@ private:
 	UPROPERTY(VisibleAnywhere, Category="Combat")
 	bool bIsAttacking = false;
 
+	UPROPERTY(EditAnywhere, Category="Combat")
+	UItemDataAsset* DefaultWeaponData;
 	/**
 	 * This function configures Collision settings for an Enemy actor
 	 */
