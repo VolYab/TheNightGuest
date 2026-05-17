@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Characters/BaseCharacter.h"
-#include "Characters/CharacterTypes.h"
 #include "Enemy.generated.h"
 
 class UItemDataAsset;
@@ -22,7 +21,6 @@ public:
 	 * Functions
 	*/
 	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 	virtual void Destroyed() override;
 
@@ -36,10 +34,7 @@ public:
 	 */
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-	/**
-	 * This is a public function for StateTreeTask to call to perform attack using an Equipped weapon 
-	 */
-	void PerformAttack();
+	virtual void Attack() override;
 protected:
 	/*
 	 * Properties
@@ -50,8 +45,7 @@ protected:
 	 * Functions
 	 */
 	virtual void BeginPlay() override;
-
-	virtual void Attack() override;
+	
 	/**
 	 * This function handles death processes
 	 */
@@ -105,6 +99,9 @@ private:
 	 * This function configures Collision settings for an Enemy actor
 	 */
 	void ConfigureCollisionResponces();
+
+	void ShowHealthBar();
+	void HideHealthBar();
 /**
  * Getters and Setters
  */

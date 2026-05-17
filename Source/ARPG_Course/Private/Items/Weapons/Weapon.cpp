@@ -133,3 +133,8 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		IgnoreActors.AddUnique(HitResult.GetActor());
 	}
 }
+
+FName AWeapon::GetGripName() const
+{
+	return GripType == EGripType::EGT_1Hand ? FName("1HWeapon") : FName("2HWeapon");
+}

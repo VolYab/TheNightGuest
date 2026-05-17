@@ -91,7 +91,7 @@ void AARPGCharacter::Move(const FInputActionValue& Value)
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 	// Forward / Backward
-	if (CharacterState == ECharacterState::ECS_EquippedTwoHandedWeapon || CharacterState == ECharacterState::ECS_EquippedTwoHandedSpear)
+	if (CharacterState == ECharacterState::ECS_Equipped && EquippedWeapon->GetGripType() == EGripType::EGT_2Hand)
 	{
 		MovementVector = MovementVector / 3;
 	}
@@ -116,7 +116,7 @@ void AARPGCharacter::EKeyPressed()
 		OverlappingWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
 		SetOverlappingItem(nullptr);
 		EquippedWeapon = OverlappingWeapon;
-		SetCharacterState();
+		CharacterState = ECharacterState::ECS_Equipped;
 	}
 	else
 	{
@@ -129,7 +129,7 @@ void AARPGCharacter::EKeyPressed()
 		else if (CanArm())
 		{
 			PlayMontage(ArmDisarmMontage, FName("Arm"));
-			SetCharacterState();
+			CharacterState = ECharacterState::ECS_Equipped;
 			ActionState = EActionState::EAS_Arming;
 		}
 	}
@@ -139,24 +139,11 @@ void AARPGCharacter::Attack()
 {
 	if (CanAttack())
 	{
-		switch(CharacterState)
-		{
-		case ECharacterState::ECS_EquippedTwoHandedWeapon:
-			PlayMontage(SwordAttackMontage, FName("Attack_2HWeapon"));
-			break;
-		case ECharacterState::ECS_EquippedOneHandedWeapon:
-			PlayMontage(SwordAttackMontage, FName("Attack_1HWeapon"));
-			break;
-		case ECharacterState::ECS_EquippedOneHandedSpear:
-			PlayMontage(SpearAttackMontage, FName("Attack_1HWeapon"));
-			break;
-		case ECharacterState::ECS_EquippedTwoHandedSpear:
-			PlayMontage(SpearAttackMontage, FName("Attack_2HWeapon"));
-			break;
-		default:
-			PlayMontage(SwordAttackMontage);
-			break;
-		}
+		PickAttackMontageByWeaponType();
+		FName GripName = EquippedWeapon->GetGripName();
+		
+		FName SectionName = GetRandomSectionByName(AttackMontageToPlay, GripName);
+		PlayMontage(AttackMontageToPlay, SectionName);
 		ActionState = EActionState::EAS_Attacking;
 	}
 }
@@ -166,36 +153,22 @@ void AARPGCharacter::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& S
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && AnimMontageToPlay)
 	{
+		FName SectionToPlay;
 		AnimInstance->Montage_Play(AnimMontageToPlay);
+		//If no section name is provided - play a random section
 		if (SectionName == "")
 		{
 			//Check the number of sections in AnimMontage to generate a random index
 			const int32 NumberOfSections = AnimMontageToPlay->GetNumSections() - 1;
 			const int32 RandomSectionIndex = FMath::RandRange(0, NumberOfSections);
 			//Get Section Name using a random index
-			const FName RandomSectionName = AnimMontageToPlay->GetSectionName(RandomSectionIndex);
-			AnimInstance->Montage_JumpToSection(RandomSectionName, AnimMontageToPlay);
+			SectionToPlay = AnimMontageToPlay->GetSectionName(RandomSectionIndex);
 		}
 		else
 		{
-			// Collect all sections with names starting with the SectionName parameter
-			TArray<FName> MatchingSections;
-			for (int32 i = 0; i < AnimMontageToPlay->GetNumSections(); ++i)
-			{
-				const FName CurrentSectionName = AnimMontageToPlay->GetSectionName(i);
-				if (CurrentSectionName.ToString().StartsWith(SectionName.ToString()))
-				{
-					MatchingSections.Add(CurrentSectionName);
-				}
-			}
-
-			// Randomly select one of the matching sections
-			if (MatchingSections.Num() > 0)
-			{
-				const int32 RandomIndex = FMath::RandRange(0, MatchingSections.Num() - 1);
-				AnimInstance->Montage_JumpToSection(MatchingSections[RandomIndex], AnimMontageToPlay);
-			}
+			SectionToPlay = SectionName;
 		}
+		AnimInstance->Montage_JumpToSection(SectionToPlay, AnimMontageToPlay);
 	}
 }
 
@@ -215,18 +188,7 @@ void AARPGCharacter::Disarm()
 {
 	if (EquippedWeapon)
 	{
-		FName SocketName;
-		switch (EquippedWeapon->GetWeaponType())
-		{
-		case EWeaponType::EWT_1HSpear:
-			SocketName = FName("Spine1HSpearSocket");
-			break;
-		case EWeaponType::EWT_2HSpear:
-			SocketName = FName("Spine2HSpearSocket");
-			break;
-		default:
-			SocketName = FName("SpineWeaponSocket");
-		}
+		FName SocketName = EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Spear ? FName("SpineSpearSocket") : FName("SpineWeaponSocket");
 		EquippedWeapon->Equip(GetMesh(), SocketName, this, this);
 	}
 }
@@ -242,4 +204,49 @@ void AARPGCharacter::Arm()
 void AARPGCharacter::ArmEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
+}
+
+void AARPGCharacter::PickAttackMontageByWeaponType()
+{
+	switch (EquippedWeapon->GetWeaponType())
+	{
+	case EWeaponType::EWT_Sword:
+		AttackMontageToPlay = SwordAttackMontage;
+		break;
+	case EWeaponType::EWT_Axe:
+		AttackMontageToPlay = SwordAttackMontage;
+		break;
+	case EWeaponType::EWT_Spear:
+		AttackMontageToPlay = SpearAttackMontage;
+		break;
+	default:
+		AttackMontageToPlay = SwordAttackMontage;
+		break;
+	}
+}
+
+FName AARPGCharacter::GetRandomSectionByName(const UAnimMontage* Montage, const FName Name)
+{
+	if (!Montage || Name == "")
+	{
+		return FName("None");
+	}
+	// Collect all sections with names starting with the SectionName parameter
+	TArray<FName> MatchingSections;
+	for (int32 i = 0; i < AttackMontageToPlay->GetNumSections(); ++i)
+	{
+		const FName CurrentSectionName = Montage->GetSectionName(i);
+		if (CurrentSectionName.ToString().StartsWith(Name.ToString()))
+		{
+			MatchingSections.Add(CurrentSectionName);
+		}
+	}
+		
+	// Randomly select one of the matching sections
+	if (MatchingSections.Num() > 0)
+	{
+		const int32 RandomIndex = FMath::RandRange(0, MatchingSections.Num() - 1);
+		return MatchingSections[RandomIndex];
+	}
+	return FName("None");
 }

@@ -41,13 +41,22 @@ public:
 	 * @param ImpactPoint Point of impact.
 	 */
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+
+	/**
+	 * This is a base function to perform an attack
+	 */
+	virtual void Attack();
 	
 	ECharacterState GetCharacterState() const
 	{
 		return CharacterState;
 	}
-	void SetCharacterState();
 
+	AWeapon* GetEquippedWeapon() const
+	{
+		return EquippedWeapon;
+	}
+	
 	bool IsAttackMontageEnded() const
 	{
 		return bIsAttackMontageEnded;
@@ -67,7 +76,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	EDeadPose DeadPose = EDeadPose::EAS_Alive;
 	
-	UPROPERTY(VisibleAnywhere, Category="Combat|Weapon")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Weapon")
 	AWeapon* EquippedWeapon;
 
 	/*
@@ -81,6 +90,9 @@ protected:
 	 */
 	bool bIsAttackMontageEnded = false;
 
+	UPROPERTY(VisibleInstanceOnly, Category = "Animation|Montages")
+	UAnimMontage* AttackMontageToPlay;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Animation|Montages")
 	UAnimMontage* SwordAttackMontage;
 
@@ -115,11 +127,6 @@ protected:
 	 * Functions
 	 */
 	virtual void BeginPlay() override;
-
-	/**
-	 * This is a base function to perform an attack
-	 */
-	virtual void Attack();
 
 	/**
 	 * This is a function to check if a character can attack

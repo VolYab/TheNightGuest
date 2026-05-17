@@ -11,10 +11,16 @@ class UBoxComponent;
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
-	EWT_1HSword UMETA(DisplayName = "One-Handed Sword"),
-	EWT_2HSword UMETA(DisplayName = "Two-Handed Sword"),
-	EWT_1HSpear UMETA(DisplayName = "One-Handed Spear"),
-	EWT_2HSpear UMETA(DisplayName = "Two-Handed Spear")
+	EWT_Sword UMETA(DisplayName = "Sword"),
+	EWT_Axe UMETA(DisplayName = "Axe"),
+	EWT_Spear UMETA(DisplayName = "Spear")
+};
+
+UENUM(BlueprintType)
+enum class EGripType : uint8
+{
+	EGT_1Hand UMETA(DisplayName = "One-Handed Grip"),
+	EGT_2Hand UMETA(DisplayName = "Two-Handed Grip")
 };
 
 UCLASS()
@@ -30,6 +36,12 @@ public:
 	TArray<AActor*> IgnoreActors;
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EWeaponType WeaponType = EWeaponType::EWT_Sword;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EGripType GripType = EGripType::EGT_1Hand;
+	
 	void BeginPlay() override;
 	
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
@@ -41,9 +53,6 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void CreateFields(const FVector& FieldLocation);
 private:
-	UPROPERTY(EditAnywhere)
-	EWeaponType WeaponType = EWeaponType::EWT_1HSword;
-
 	UPROPERTY(EditAnywhere, Category = "Weapon properties")
 	USoundBase* EquipSound;
 	
@@ -64,5 +73,8 @@ private:
 //Getters and Setters
 public:
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+	FORCEINLINE EGripType GetGripType() const { return GripType; }
 	FORCEINLINE UBoxComponent* GetWeaponBoxComponent() const {return WeaponBoxComponent;}
+
+	FName GetGripName() const;
 };

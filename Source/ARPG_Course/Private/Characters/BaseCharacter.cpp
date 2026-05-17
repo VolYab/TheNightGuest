@@ -200,33 +200,3 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint)
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, ImpactPoint, FRotator(90.f, ImpactPoint.Y, ImpactPoint.Z));
 	}
 }
-
-void ABaseCharacter::SetCharacterState()
-{
-	if (EquippedWeapon)
-	{
-		switch (EquippedWeapon->GetWeaponType())
-		{
-		case EWeaponType::EWT_1HSword:
-			CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
-			break;
-		case EWeaponType::EWT_2HSword:
-			CharacterState = ECharacterState::ECS_EquippedTwoHandedWeapon;
-			break;
-		case EWeaponType::EWT_1HSpear:
-			CharacterState = ECharacterState::ECS_EquippedOneHandedSpear;
-			break;
-		case EWeaponType::EWT_2HSpear:
-			CharacterState = ECharacterState::ECS_EquippedTwoHandedSpear;
-			break;
-		default:
-			CharacterState = ECharacterState::ECS_Unequipped;
-			break;
-		}
-	}
-	else
-	{
-		CharacterState = ECharacterState::ECS_Unequipped;
-	}
-}
-

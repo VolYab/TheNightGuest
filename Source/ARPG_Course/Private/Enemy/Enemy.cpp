@@ -30,10 +30,7 @@ AEnemy::AEnemy()
 void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	if (HealthBarWidget)
-	{
-		HealthBarWidget->SetVisibility(false);
-	}
+	HideHealthBar();
 
 	AWeapon* DefaultWeapon = Cast<AWeapon>(AItemSpawner::SpawnItem(this, DefaultWeaponData));
 	DefaultWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
@@ -49,26 +46,14 @@ void AEnemy::Tick(float DeltaTime)
 	if (!TargetInRange(CombatTarget, CombatRadius))
 	{
 		CombatTarget = nullptr;
-		if (HealthBarWidget)
-		{
-			HealthBarWidget->SetVisibility(false);
-		}
+		HideHealthBar();
 	}
-}
-
-void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 {
 	Super::GetHit_Implementation(ImpactPoint);
-	if (HealthBarWidget)
-	{
-		HealthBarWidget->SetVisibility(true);
-	}
+	ShowHealthBar();
 }
 
 void AEnemy::Destroyed()
@@ -95,42 +80,16 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	return DamageAmount;
 }
 
-void AEnemy::PerformAttack()
-{
-	Attack();
-}
-
 void AEnemy::Attack()
 {
-	EnemyState = EEnemyState::EES_Attacking;
+	//TODO add check if can attack (not dead, not playing hit animation, has weapon)
+	
 	if (SwordAttackMontage)
 	{
 		PlayMontage(SwordAttackMontage);
 	}
+	EnemyState = EEnemyState::EES_Attacking;
 }
-
-/*void AEnemy::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName)
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AnimMontageToPlay)
-	{
-		AnimInstance->OnMontageEnded.AddDynamic(this, &ABaseCharacter::HandleMontageEnded);
-		AnimInstance->Montage_Play(AnimMontageToPlay);
-		if (SectionName != "")
-		{
-			AnimInstance->Montage_JumpToSection(SectionName, AnimMontageToPlay);
-		}
-		else
-		{
-			//Check the number of sections in AnimMontage to generate a random index
-			const int32 NumberOfSections = AnimMontageToPlay->GetNumSections() - 1;
-			const int32 RandomSectionIndex = FMath::RandRange(0, NumberOfSections);
-			//Get Section Name using a random index
-			const FName RandomSectionName = AnimMontageToPlay->GetSectionName(RandomSectionIndex);
-			AnimInstance->Montage_JumpToSection(RandomSectionName, AnimMontageToPlay);
-		}
-	}
-}*/
 
 void AEnemy::ConfigureCollisionResponces()
 {
@@ -141,12 +100,25 @@ void AEnemy::ConfigureCollisionResponces()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
-void AEnemy::Die()
+void AEnemy::ShowHealthBar()
+{
+	if (HealthBarWidget)
+	{
+		HealthBarWidget->SetVisibility(true);
+	}
+}
+
+void AEnemy::HideHealthBar()
 {
 	if (HealthBarWidget)
 	{
 		HealthBarWidget->SetVisibility(false);
 	}
+}
+
+void AEnemy::Die()
+{
+	HideHealthBar();
 	Super::Die();
 }
 

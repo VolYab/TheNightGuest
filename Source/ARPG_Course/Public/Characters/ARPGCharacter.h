@@ -26,6 +26,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void PossessedBy(AController* NewController) override;
+
+	virtual void Attack() override;
 protected:
 	virtual void BeginPlay() override;
 
@@ -56,7 +58,6 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Lookout(const FInputActionValue& Value);
 	void EKeyPressed();
-	virtual void Attack() override;
 
 	/*
 	 * PlayMontages functions
@@ -87,6 +88,9 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	AItem* OverlappingItem;
 
+	void PickAttackMontageByWeaponType();
+	FName GetRandomSectionByName(const UAnimMontage* Montage, FName Name);
+	
 public:
 	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamId) override {if (TeamId != NewTeamId){TeamId = NewTeamId;}};
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }

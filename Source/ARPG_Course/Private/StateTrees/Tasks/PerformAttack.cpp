@@ -13,7 +13,7 @@ EStateTreeRunStatus UPerformAttack::EnterState(FStateTreeExecutionContext& Conte
 		return EStateTreeRunStatus::Failed;
 	}
 	
-	Actor->PerformAttack();
+	Actor->Attack();
 	return EStateTreeRunStatus::Running;
 }
 
