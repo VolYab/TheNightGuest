@@ -47,9 +47,9 @@ public:
 	 */
 	virtual void Attack();
 	
-	ECharacterState GetCharacterState() const
+	EEquipState GetEquipState() const
 	{
-		return CharacterState;
+		return EquipState;
 	}
 
 	AWeapon* GetEquippedWeapon() const
@@ -70,7 +70,7 @@ protected:
 	/**
 	 * Properties
 	 */
-	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
+	EEquipState EquipState = EEquipState::EES_Unequipped;
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 
 	UPROPERTY(BlueprintReadOnly)

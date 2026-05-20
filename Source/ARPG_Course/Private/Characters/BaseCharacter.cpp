@@ -33,7 +33,7 @@ void ABaseCharacter::Attack()
 
 bool ABaseCharacter::CanAttack()
 {
-	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped;
+	return ActionState == EActionState::EAS_Unoccupied && EquipState != EEquipState::EES_Unequipped;
 }
 
 void ABaseCharacter::AttackEnd()

@@ -52,8 +52,8 @@ void AEnemy::Tick(float DeltaTime)
 
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 {
-	Super::GetHit_Implementation(ImpactPoint);
 	ShowHealthBar();
+	Super::GetHit_Implementation(ImpactPoint);
 }
 
 void AEnemy::Destroyed()

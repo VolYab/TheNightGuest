@@ -26,5 +26,5 @@ public:
 	class UCharacterMovementComponent* ARPGCharacterMovement;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Movement | Character State")
-	ECharacterState CharacterState;
+	EEquipState EquipState;
 };

@@ -91,7 +91,7 @@ void AARPGCharacter::Move(const FInputActionValue& Value)
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 	// Forward / Backward
-	if (CharacterState == ECharacterState::ECS_Equipped && EquippedWeapon->GetGripType() == EGripType::EGT_2Hand)
+	if (EquipState == EEquipState::EES_Equipped && EquippedWeapon->GetGripType() == EGripType::EGT_2Hand)
 	{
 		MovementVector = MovementVector / 3;
 	}
@@ -111,25 +111,25 @@ void AARPGCharacter::Lookout(const FInputActionValue& Value)
 void AARPGCharacter::EKeyPressed()
 {
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
-	if (OverlappingWeapon && CharacterState == ECharacterState::ECS_Unequipped)
+	if (OverlappingWeapon && EquipState == EEquipState::EES_Unequipped)
 	{
 		OverlappingWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
 		SetOverlappingItem(nullptr);
 		EquippedWeapon = OverlappingWeapon;
-		CharacterState = ECharacterState::ECS_Equipped;
+		EquipState = EEquipState::EES_Equipped;
 	}
 	else
 	{
 		if (CanDisarm())
 		{
 			PlayMontage(ArmDisarmMontage, FName("Disarm"));
-			CharacterState = ECharacterState::ECS_Unequipped;
+			EquipState = EEquipState::EES_Unequipped;
 			ActionState = EActionState::EAS_Arming;
 		}
 		else if (CanArm())
 		{
 			PlayMontage(ArmDisarmMontage, FName("Arm"));
-			CharacterState = ECharacterState::ECS_Equipped;
+			EquipState = EEquipState::EES_Equipped;
 			ActionState = EActionState::EAS_Arming;
 		}
 	}
@@ -174,13 +174,13 @@ void AARPGCharacter::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& S
 
 bool AARPGCharacter::CanDisarm()
 {
-	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped;
+	return ActionState == EActionState::EAS_Unoccupied && EquipState != EEquipState::EES_Unequipped;
 }
 
 bool AARPGCharacter::CanArm()
 {
 	return ActionState == EActionState::EAS_Unoccupied &&
-		CharacterState == ECharacterState::ECS_Unequipped &&
+		EquipState == EEquipState::EES_Unequipped &&
 		EquippedWeapon;
 }
 
