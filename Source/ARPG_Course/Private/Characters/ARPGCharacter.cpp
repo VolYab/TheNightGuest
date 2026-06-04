@@ -10,11 +10,18 @@
 #include "Items/Item.h"
 #include "Items/Weapons/Weapon.h"
 #include "Characters/ARPGPlayerController.h"
+#include "CustomComponents/AttributesComponent.h"
 
 AARPGCharacter::AARPGCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	GetMesh()->SetCollisionObjectType(ECC_WorldDynamic);
+	GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+	GetMesh()->SetGenerateOverlapEvents(true);
+	
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(GetRootComponent());
 	SpringArm->TargetArmLength = 300.f;
@@ -44,7 +51,7 @@ void AARPGCharacter::BeginPlay()
 			Subsystem->AddMappingContext(InputActionContext, 0);
 		}
 	}
-	Tags.Add(FName("ARPGCharacter"));
+	Tags.Add(FName("EngageableTarget"));
 }
 
 void AARPGCharacter::Tick(float DeltaTime)
@@ -148,28 +155,14 @@ void AARPGCharacter::Attack()
 	}
 }
 
-void AARPGCharacter::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName)
+bool AARPGCharacter::CanAttack()
 {
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AnimMontageToPlay)
-	{
-		FName SectionToPlay;
-		AnimInstance->Montage_Play(AnimMontageToPlay);
-		//If no section name is provided - play a random section
-		if (SectionName == "")
-		{
-			//Check the number of sections in AnimMontage to generate a random index
-			const int32 NumberOfSections = AnimMontageToPlay->GetNumSections() - 1;
-			const int32 RandomSectionIndex = FMath::RandRange(0, NumberOfSections);
-			//Get Section Name using a random index
-			SectionToPlay = AnimMontageToPlay->GetSectionName(RandomSectionIndex);
-		}
-		else
-		{
-			SectionToPlay = SectionName;
-		}
-		AnimInstance->Montage_JumpToSection(SectionToPlay, AnimMontageToPlay);
-	}
+	return ActionState == EActionState::EAS_Unoccupied && EquipState != EEquipState::EES_Unequipped;
+}
+
+void AARPGCharacter::AttackEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
 bool AARPGCharacter::CanDisarm()
@@ -204,6 +197,36 @@ void AARPGCharacter::Arm()
 void AARPGCharacter::ArmEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
+}
+
+void AARPGCharacter::HitReactEnd()
+{
+	Super::HitReactEnd();
+	if (ActionState == EActionState::EAS_HitReaction)
+	{
+		ActionState = EActionState::EAS_Unoccupied;
+	}
+}
+
+float AARPGCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
+                                 AActor* DamageCauser)
+{
+	if (AttributeComponent)
+	{
+		AttributeComponent->ReceiveDamage(DamageAmount);
+		/*if (HealthBarWidget)
+		{
+			HealthBarWidget->SetHealthPercent(AttributeComponent->GetCurrentHealth() / AttributeComponent->GetMaxHealth());
+		}*/
+	}
+	return DamageAmount;
+}
+
+void AARPGCharacter::GetHit_Implementation(const FVector& ImpactPoint)
+{
+	Super::GetHit_Implementation(ImpactPoint);
+	ActionState = EActionState::EAS_HitReaction;
+	SetEnableBoxCollision(ECollisionEnabled::NoCollision);
 }
 
 void AARPGCharacter::PickAttackMontageByWeaponType()

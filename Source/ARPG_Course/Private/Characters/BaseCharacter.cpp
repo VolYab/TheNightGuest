@@ -33,12 +33,15 @@ void ABaseCharacter::Attack()
 
 bool ABaseCharacter::CanAttack()
 {
-	return ActionState == EActionState::EAS_Unoccupied && EquipState != EEquipState::EES_Unequipped;
+	return true;
 }
 
 void ABaseCharacter::AttackEnd()
 {
-	ActionState = EActionState::EAS_Unoccupied;
+}
+
+void ABaseCharacter::HitReactEnd()
+{
 }
 
 void ABaseCharacter::Die()
@@ -68,37 +71,22 @@ void ABaseCharacter::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& S
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && AnimMontageToPlay)
 	{
-		AnimInstance->OnMontageEnded.AddDynamic(this, &ABaseCharacter::HandleMontageEnded);
+		FName SectionToPlay;
 		AnimInstance->Montage_Play(AnimMontageToPlay);
+		//If no section name is provided - play a random section
 		if (SectionName == "")
 		{
 			//Check the number of sections in AnimMontage to generate a random index
 			const int32 NumberOfSections = AnimMontageToPlay->GetNumSections() - 1;
 			const int32 RandomSectionIndex = FMath::RandRange(0, NumberOfSections);
 			//Get Section Name using a random index
-			const FName RandomSectionName = AnimMontageToPlay->GetSectionName(RandomSectionIndex);
-			AnimInstance->Montage_JumpToSection(RandomSectionName, AnimMontageToPlay);
+			SectionToPlay = AnimMontageToPlay->GetSectionName(RandomSectionIndex);
 		}
 		else
 		{
-			// Collect all sections with names starting with the SectionName parameter
-			TArray<FName> MatchingSections;
-			for (int32 i = 0; i < AnimMontageToPlay->GetNumSections(); ++i)
-			{
-				const FName CurrentSectionName = AnimMontageToPlay->GetSectionName(i);
-				if (CurrentSectionName.ToString().StartsWith(SectionName.ToString()))
-				{
-					MatchingSections.Add(CurrentSectionName);
-				}
-			}
-
-			// Randomly select one of the matching sections
-			if (MatchingSections.Num() > 0)
-			{
-				const int32 RandomIndex = FMath::RandRange(0, MatchingSections.Num() - 1);
-				AnimInstance->Montage_JumpToSection(MatchingSections[RandomIndex], AnimMontageToPlay);
-			}
+			SectionToPlay = SectionName;
 		}
+		AnimInstance->Montage_JumpToSection(SectionToPlay, AnimMontageToPlay);
 	}
 }
 
@@ -137,16 +125,6 @@ FName ABaseCharacter::CalculateHitDirection(const FVector& ImpactPoint)
 		DiretionName = FName("FromLeft");
 	}
 	return DiretionName;
-}
-
-void ABaseCharacter::HandleMontageEnded(UAnimMontage* AnimMontage, bool bInterrupted)
-{
-	bIsAttackMontageEnded = true;
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AnimInstance->OnMontageEnded.IsAlreadyBound(this, &ABaseCharacter::HandleMontageEnded))
-	{
-		AnimInstance->OnMontageEnded.RemoveDynamic(this, &ABaseCharacter::HandleMontageEnded);
-	}
 }
 
 void ABaseCharacter::SetEnableBoxCollision(ECollisionEnabled::Type BoxCollisionEnabled)

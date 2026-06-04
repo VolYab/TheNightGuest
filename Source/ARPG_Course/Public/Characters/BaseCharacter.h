@@ -56,22 +56,11 @@ public:
 	{
 		return EquippedWeapon;
 	}
-	
-	bool IsAttackMontageEnded() const
-	{
-		return bIsAttackMontageEnded;
-	}
-
-	void SetIsAttackMontageEnded(bool newIsAttackMontageEnded)
-	{
-		this->bIsAttackMontageEnded = newIsAttackMontageEnded;
-	}
 protected:
 	/**
 	 * Properties
 	 */
 	EEquipState EquipState = EEquipState::EES_Unequipped;
-	EActionState ActionState = EActionState::EAS_Unoccupied;
 
 	UPROPERTY(BlueprintReadOnly)
 	EDeadPose DeadPose = EDeadPose::EAS_Alive;
@@ -88,8 +77,6 @@ protected:
 	/**
 	 * Animation montages
 	 */
-	bool bIsAttackMontageEnded = false;
-
 	UPROPERTY(VisibleInstanceOnly, Category = "Animation|Montages")
 	UAnimMontage* AttackMontageToPlay;
 	
@@ -132,10 +119,13 @@ protected:
 	 * This is a function to check if a character can attack
 	 * @return true if a character can attack, false if not
 	 */
-	bool CanAttack();
+	virtual bool CanAttack();
 
 	UFUNCTION(BlueprintCallable)
 	virtual void AttackEnd();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void HitReactEnd();
 
 	/**
 	 * This function handles death processes
@@ -151,14 +141,6 @@ protected:
 	 * @param SectionName Section name in montage to play, if provided. If not provided - a random section will be played.
 	 */
 	virtual void PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName = "");
-
-	/**
-	 * Handler to run when the montage is ended
-	 * @param AnimMontage Animation montage which is played
-	 * @param bInterrupted Is montage finished or interrupted
-	 */
-	UFUNCTION()
-	void HandleMontageEnded(UAnimMontage* AnimMontage, bool bInterrupted);
 private:
 
 	/**

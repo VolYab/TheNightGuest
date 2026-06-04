@@ -42,36 +42,46 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EGripType GripType = EGripType::EGT_1Hand;
 	
-	void BeginPlay() override;
+	virtual void BeginPlay() override;
 	
-	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
-	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
-
 	UFUNCTION()
 	void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void CreateFields(const FVector& FieldLocation);
 private:
-	UPROPERTY(EditAnywhere, Category = "Weapon properties")
+	UPROPERTY(EditAnywhere)
 	USoundBase* EquipSound;
 	
-	UPROPERTY(VisibleAnywhere, Category = "Weapon properties")
+	UPROPERTY(VisibleAnywhere, Category = "Box properties")
 	UBoxComponent* WeaponBoxComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Box properties")
 	USceneComponent* TraceBoxStart;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Box properties")
 	USceneComponent* TraceBoxEnd;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon properties")
+	UPROPERTY(EditAnywhere, Category = "Box properties")
+	FVector BoxTraceExtent = FVector(5.f);
+
+	UPROPERTY(EditAnywhere, Category = "Box properties")
+	bool bShowBoxDebug = false;
+
+	UPROPERTY(EditAnywhere, Category = "Attack properties")
 	float WeaponDamage = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon properties")
+	UPROPERTY(EditAnywhere, Category = "Attack properties")
 	float AttackRange = 100.f;
-//Getters and Setters
+
+	void PlayEquipSound() const;
+	void DisableCollisionSphere() const;
+	void HidePopupWidget() const;
+	void BoxTrace(FHitResult& BoxHit);
+	void HandleHitInteraction(FHitResult BoxHit);
+	bool ActorIsSameType(const AActor* OtherActor) const;
 public:
+	//Getters and Setters
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE EGripType GetGripType() const { return GripType; }
 	FORCEINLINE UBoxComponent* GetWeaponBoxComponent() const {return WeaponBoxComponent;}

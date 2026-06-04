@@ -2,14 +2,18 @@
 
 
 #include "Enemy/Enemy.h"
+
+#include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "CustomComponents/AttributesComponent.h"
-#include "DataAssets/ItemDataAsset.h"
 #include "Factories/ItemSpawner.h"
 #include "Widgets/HealthBarComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Items/Weapons/Weapon.h"
+#include "AIController.h"
+#include "Components/StateTreeComponent.h"
+#include "GameplayTagContainer.h"
 
 AEnemy::AEnemy()
 {
@@ -30,11 +34,13 @@ AEnemy::AEnemy()
 void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+	Tags.Add(FName("Enemy"));
 	HideHealthBar();
 
 	AWeapon* DefaultWeapon = Cast<AWeapon>(AItemSpawner::SpawnItem(this, DefaultWeaponData));
 	DefaultWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
 	EquippedWeapon = DefaultWeapon;
+	EquipState = EEquipState::EES_Equipped;
 }
 
 
@@ -43,16 +49,17 @@ void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	if (!TargetInRange(CombatTarget, CombatRadius))
+	/*if (!TargetInRange(CombatTarget, CombatRadius))
 	{
 		CombatTarget = nullptr;
 		HideHealthBar();
-	}
+	}*/
 }
 
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 {
 	ShowHealthBar();
+	EnemyState = EEnemyState::EES_HitReaction;
 	Super::GetHit_Implementation(ImpactPoint);
 }
 
@@ -83,12 +90,14 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 void AEnemy::Attack()
 {
 	//TODO add check if can attack (not dead, not playing hit animation, has weapon)
-	
-	if (SwordAttackMontage)
+	if (CanAttack())
 	{
-		PlayMontage(SwordAttackMontage);
+		if (SwordAttackMontage)
+        	{
+        		PlayMontage(SwordAttackMontage);
+        	}
+        	EnemyState = EEnemyState::EES_Attacking;
 	}
-	EnemyState = EEnemyState::EES_Attacking;
 }
 
 void AEnemy::ConfigureCollisionResponces()
@@ -118,8 +127,10 @@ void AEnemy::HideHealthBar()
 
 void AEnemy::Die()
 {
+	EnemyState = EEnemyState::EES_Dead;
 	HideHealthBar();
 	Super::Die();
+	EquippedWeapon->GetWeaponBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 bool AEnemy::TargetInRange(AActor* Target, float RangeRadius)
@@ -127,4 +138,42 @@ bool AEnemy::TargetInRange(AActor* Target, float RangeRadius)
 	if (Target == nullptr) return false;
 	const double DistanceToTarget = (Target->GetActorLocation() - GetActorLocation()).Size();
 	return DistanceToTarget <= RangeRadius;	
+}
+
+bool AEnemy::CanAttack()
+{
+	return EnemyState == EEnemyState::EES_Unoccupied && EquipState != EEquipState::EES_Unequipped;
+}
+
+void AEnemy::AttackEnd()
+{
+	EnemyState = EEnemyState::EES_Unoccupied;
+}
+
+void AEnemy::HitReactEnd()
+{
+	EnemyState = EEnemyState::EES_Unoccupied;
+}
+
+void AEnemy::SendAIStateTreeEvent(FGameplayTag EventTag) const
+{
+	if (!EventTag.IsValid())
+	{
+		return;
+	}
+	AAIController* AICon = Cast<AAIController>(GetController());
+	if (!AICon)
+	{
+		return;
+	}
+	UStateTreeComponent* STComp = AICon->FindComponentByClass<UStateTreeComponent>();
+	if (!STComp)
+	{
+		// Try also on the pawn itself (in case the component is attached to the character)
+		STComp = FindComponentByClass<UStateTreeComponent>();
+	}
+	if (STComp)
+	{
+		STComp->SendStateTreeEvent(EventTag);
+	}
 }

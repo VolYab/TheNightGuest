@@ -3,11 +3,27 @@
 #pragma once
 
 #include "Characters/BaseCharacter.h"
+#include "GameplayTagContainer.h"
 #include "Enemy.generated.h"
 
 class UItemDataAsset;
 class UWidgetComponent;
 class UHealthBarComponent;
+
+/**
+ * Enumeration representing the action state of an enemy.
+ * Used to track the current action being performed by the enemy.
+ */
+UENUM(BlueprintType)
+enum class EEnemyState : uint8
+{
+	EES_Unoccupied UMETA(DisplayName = "Unoccupied"),
+	EES_Patrolling UMETA(DisplayName = "Patrolling"),
+	EES_Chasing UMETA(DisplayName = "Chasing"),
+	EES_Attacking UMETA(DisplayName = "Attacking"),
+	EES_HitReaction UMETA(DisplayName = "Hit Reaction"),
+	EES_Dead UMETA(DisplayName = "Dead")
+};
 
 /** Base class for enemies */
 UCLASS()
@@ -36,11 +52,9 @@ public:
 
 	virtual void Attack() override;
 protected:
-	/*
-	 * Properties
-	 */
+	UPROPERTY(BlueprintReadWrite, Category="Combat")
+	AActor* CombatTarget;
 	
-
 	/*
 	 * Functions
 	 */
@@ -59,18 +73,12 @@ protected:
 	 */
 	bool TargetInRange(AActor* Target, float RangeRadius);
 
-	/*
-	 * PlayMontages functions
-	 */
-	/**
-	 * This function plays animation montage
-	 * @param AnimMontageToPlay Montage to play.
-	 * @param SectionName Section name in montage to play, if provided. If not provided - a random section will be played.
-	 
-	virtual void PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName = "") override;*/
+	virtual bool CanAttack() override;
+	virtual void AttackEnd() override;
+	virtual void HitReactEnd() override;
 
 private:
-	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+	EEnemyState EnemyState = EEnemyState::EES_Unoccupied;
 	
 	/*
 	 * COMPONENTS
@@ -81,9 +89,6 @@ private:
 	/*
 	 * COMBAT
 	 */
-	UPROPERTY(VisibleAnywhere, Category="Combat")
-	AActor* CombatTarget;
-
 	UPROPERTY(EditAnywhere, Category="Combat")
 	double CombatRadius = 500.f;
 
@@ -102,6 +107,11 @@ private:
 
 	void ShowHealthBar();
 	void HideHealthBar();
+
+	/** Sends a StateTree event with the given tag to this Enemy's AI StateTreeComponent (if any). */
+	UFUNCTION(BlueprintCallable, Category="AI|StateTree")
+	void SendAIStateTreeEvent(FGameplayTag EventTag) const;
+
 /**
  * Getters and Setters
  */
@@ -114,5 +124,15 @@ public:
 	void SetIsAttacking(bool NewBIsAttacking)
 	{
 		this->bIsAttacking = NewBIsAttacking;
+	}
+
+	EEnemyState GetEnemyState() const
+	{
+		return EnemyState;
+	}
+
+	void SetEnemyState(EEnemyState NewEnemyState)
+	{
+		this->EnemyState = NewEnemyState;
 	}
 };
