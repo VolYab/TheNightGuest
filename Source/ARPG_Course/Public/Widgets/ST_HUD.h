@@ -27,4 +27,7 @@ private:
 
 	UPROPERTY()
 	UMainOverlay* MainOverlay;
+
+public:
+	FORCEINLINE UMainOverlay* GetMainOverlay() const { return MainOverlay; }
 };

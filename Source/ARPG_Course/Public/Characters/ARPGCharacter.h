@@ -7,6 +7,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "ARPGCharacter.generated.h"
 
+class UMainOverlay;
 class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
@@ -92,6 +93,9 @@ protected:
 	
 	virtual void HitReactEnd() override;
 private:
+	UPROPERTY()
+	APlayerController* PlayerController;
+	
 	UPROPERTY(VisibleAnywhere)
 	FGenericTeamId TeamId;
 
@@ -104,7 +108,30 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	AItem* OverlappingItem;
 
+	UPROPERTY()
+	UMainOverlay* MainOverlay;
+
+	/**
+	 * This function sets up the Input system for the player character
+	 */
+	void InitializeInputSubsystem();
+
+	/**
+	 * This function sets up the Main overlay widgets
+	 */
+	void InitializeMainOverlay();
+
+	/**
+	 * This function checks the current EquippedWeapon type and sets AttackMontageToPlay to correct montage
+	 */
 	void PickAttackMontageByWeaponType();
+
+	/**
+	 * This function randomly selects one of the sections with names starting with the SectionName parameter
+	 * @param Montage AnimMontage to pick section from
+	 * @param Name Name to filter sections
+	 * @return 
+	 */
 	FName GetRandomSectionByName(const UAnimMontage* Montage, FName Name);
 	
 public:

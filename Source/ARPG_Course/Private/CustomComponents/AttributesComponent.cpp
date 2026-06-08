@@ -49,3 +49,13 @@ bool UAttributesComponent::IsAlive() const
 	return CurrentHealth > 0;
 }
 
+float UAttributesComponent::GetHealthPercent()
+{
+	return CurrentHealth / MaxHealth;
+}
+
+float UAttributesComponent::GetStaminaPercent()
+{
+	return CurrentStamina / MaxStamina;
+}
+

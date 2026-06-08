@@ -11,6 +11,8 @@
 #include "Items/Weapons/Weapon.h"
 #include "Characters/ARPGPlayerController.h"
 #include "CustomComponents/AttributesComponent.h"
+#include "Widgets/MainOverlay.h"
+#include "Widgets/ST_HUD.h"
 
 AARPGCharacter::AARPGCharacter()
 {
@@ -42,14 +44,11 @@ void AARPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	PlayerController = Cast<APlayerController>(GetController());
 	if (PlayerController)
 	{
-		UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
-		if (Subsystem)
-		{
-			Subsystem->AddMappingContext(InputActionContext, 0);
-		}
+		InitializeInputSubsystem();
+		InitializeMainOverlay();
 	}
 	Tags.Add(FName("EngageableTarget"));
 }
@@ -81,6 +80,39 @@ void AARPGCharacter::PossessedBy(AController* NewController)
 	{
 		TeamId = ControllerAsTeamProvider->GetGenericTeamId();
 	}
+}
+
+void AARPGCharacter::Attack()
+{
+	if (CanAttack())
+	{
+		FName GripName = EquippedWeapon->GetGripName();
+		
+		FName SectionName = GetRandomSectionByName(AttackMontageToPlay, GripName);
+		PlayMontage(AttackMontageToPlay, SectionName);
+		ActionState = EActionState::EAS_Attacking;
+	}
+}
+
+float AARPGCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
+								 AActor* DamageCauser)
+{
+	if (AttributeComponent)
+	{
+		AttributeComponent->ReceiveDamage(DamageAmount);
+		if (MainOverlay)
+		{
+			MainOverlay->SetHealthPercent(AttributeComponent->GetHealthPercent());
+		}
+	}
+	return DamageAmount;
+}
+
+void AARPGCharacter::GetHit_Implementation(const FVector& ImpactPoint)
+{
+	Super::GetHit_Implementation(ImpactPoint);
+	ActionState = EActionState::EAS_HitReaction;
+	SetEnableBoxCollision(ECollisionEnabled::NoCollision);
 }
 
 void AARPGCharacter::Move(const FInputActionValue& Value)
@@ -120,9 +152,9 @@ void AARPGCharacter::EKeyPressed()
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
 	if (OverlappingWeapon && EquipState == EEquipState::EES_Unequipped)
 	{
-		OverlappingWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
 		SetOverlappingItem(nullptr);
 		EquippedWeapon = OverlappingWeapon;
+		Arm();
 		EquipState = EEquipState::EES_Equipped;
 	}
 	else
@@ -139,19 +171,6 @@ void AARPGCharacter::EKeyPressed()
 			EquipState = EEquipState::EES_Equipped;
 			ActionState = EActionState::EAS_Arming;
 		}
-	}
-}
-
-void AARPGCharacter::Attack()
-{
-	if (CanAttack())
-	{
-		PickAttackMontageByWeaponType();
-		FName GripName = EquippedWeapon->GetGripName();
-		
-		FName SectionName = GetRandomSectionByName(AttackMontageToPlay, GripName);
-		PlayMontage(AttackMontageToPlay, SectionName);
-		ActionState = EActionState::EAS_Attacking;
 	}
 }
 
@@ -191,6 +210,7 @@ void AARPGCharacter::Arm()
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
+		PickAttackMontageByWeaponType();
 	}
 }
 
@@ -208,25 +228,27 @@ void AARPGCharacter::HitReactEnd()
 	}
 }
 
-float AARPGCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
-                                 AActor* DamageCauser)
+void AARPGCharacter::InitializeInputSubsystem()
 {
-	if (AttributeComponent)
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
+	if (Subsystem)
 	{
-		AttributeComponent->ReceiveDamage(DamageAmount);
-		/*if (HealthBarWidget)
-		{
-			HealthBarWidget->SetHealthPercent(AttributeComponent->GetCurrentHealth() / AttributeComponent->GetMaxHealth());
-		}*/
+		Subsystem->AddMappingContext(InputActionContext, 0);
 	}
-	return DamageAmount;
 }
 
-void AARPGCharacter::GetHit_Implementation(const FVector& ImpactPoint)
+void AARPGCharacter::InitializeMainOverlay()
 {
-	Super::GetHit_Implementation(ImpactPoint);
-	ActionState = EActionState::EAS_HitReaction;
-	SetEnableBoxCollision(ECollisionEnabled::NoCollision);
+	AST_HUD* ST_HUD = Cast<AST_HUD>(PlayerController->GetHUD());
+	if (ST_HUD)
+	{
+		MainOverlay = ST_HUD->GetMainOverlay();
+		if (MainOverlay)
+		{
+			MainOverlay->SetHealthPercent(AttributeComponent->GetHealthPercent());
+			MainOverlay->SetStaminaPercent(AttributeComponent->GetStaminaPercent());
+		}
+	}
 }
 
 void AARPGCharacter::PickAttackMontageByWeaponType()
