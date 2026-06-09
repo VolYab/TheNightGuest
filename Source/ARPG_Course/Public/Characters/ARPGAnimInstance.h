@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "CharacterTypes.h"
 #include "ARPGAnimInstance.generated.h"
 
 /**
@@ -25,6 +24,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	class UCharacterMovementComponent* ARPGCharacterMovement;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Movement | Character State")
-	EEquipState EquipState;
+	// UPROPERTY(BlueprintReadOnly, Category = "Movement | Character State")
+	// EEquipState EquipState;
 };

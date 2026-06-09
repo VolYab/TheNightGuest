@@ -24,7 +24,8 @@ enum class EActionState : uint8
 	EAS_Unoccupied UMETA(DisplayName = "Unoccupied"),
 	EAS_HitReaction UMETA(DisplayName = "Hit Reaction"),
 	EAS_Attacking UMETA(DisplayName = "Attacking"),
-	EAS_Arming UMETA(DisplayName = "Arming")
+	EAS_Arming UMETA(DisplayName = "Arming"),
+	EAS_Dead UMETA(DisplayName = "Dead")
 };
 
 UCLASS()
@@ -46,6 +47,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Movement | Character State")
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 	
 	/*
@@ -92,6 +94,7 @@ protected:
 	void ArmEnd();
 	
 	virtual void HitReactEnd() override;
+	virtual void Die();
 private:
 	UPROPERTY()
 	APlayerController* PlayerController;
@@ -133,6 +136,8 @@ private:
 	 * @return 
 	 */
 	FName GetRandomSectionByName(const UAnimMontage* Montage, FName Name);
+
+	void UpdateHealthBar();
 	
 public:
 	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamId) override {if (TeamId != NewTeamId){TeamId = NewTeamId;}};

@@ -29,6 +29,6 @@ void UARPGAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		ActionState = ARPGCharacter->GetActionState();
 		DeathPose = ARPGCharacter->GetDeathPose();*/
 
-		EquipState = ARPGCharacter->GetEquipState();
+		//EquipState = ARPGCharacter->GetEquipState();
 	}
 }

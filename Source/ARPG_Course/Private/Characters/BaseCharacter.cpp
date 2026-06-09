@@ -63,6 +63,7 @@ void ABaseCharacter::Die()
 	}
 	PlayMontage(DeathMontage, AnimSectionName);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetLifeSpan(3.f);
 }
 

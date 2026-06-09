@@ -95,15 +95,12 @@ void AARPGCharacter::Attack()
 }
 
 float AARPGCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
-								 AActor* DamageCauser)
+                                 AActor* DamageCauser)
 {
 	if (AttributeComponent)
 	{
 		AttributeComponent->ReceiveDamage(DamageAmount);
-		if (MainOverlay)
-		{
-			MainOverlay->SetHealthPercent(AttributeComponent->GetHealthPercent());
-		}
+		UpdateHealthBar();
 	}
 	return DamageAmount;
 }
@@ -111,13 +108,16 @@ float AARPGCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& 
 void AARPGCharacter::GetHit_Implementation(const FVector& ImpactPoint)
 {
 	Super::GetHit_Implementation(ImpactPoint);
-	ActionState = EActionState::EAS_HitReaction;
+	if (AttributeComponent && AttributeComponent->IsAlive())
+	{
+		ActionState = EActionState::EAS_HitReaction;
+	}
 	SetEnableBoxCollision(ECollisionEnabled::NoCollision);
 }
 
 void AARPGCharacter::Move(const FInputActionValue& Value)
 {
-	//if (ActionState != EActionState::EAS_Unoccupied) return;
+	if (ActionState == EActionState::EAS_HitReaction) return;
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	// Find out forward and right vector based on controller rotation
@@ -228,6 +228,12 @@ void AARPGCharacter::HitReactEnd()
 	}
 }
 
+void AARPGCharacter::Die()
+{
+	Super::Die();
+	ActionState = EActionState::EAS_Dead;
+}
+
 void AARPGCharacter::InitializeInputSubsystem()
 {
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
@@ -294,4 +300,13 @@ FName AARPGCharacter::GetRandomSectionByName(const UAnimMontage* Montage, const 
 		return MatchingSections[RandomIndex];
 	}
 	return FName("None");
+}
+
+
+void AARPGCharacter::UpdateHealthBar()
+{
+	if (MainOverlay)
+	{
+		MainOverlay->SetHealthPercent(AttributeComponent->GetHealthPercent());
+	}
 }

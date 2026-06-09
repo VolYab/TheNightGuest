@@ -56,18 +56,25 @@ public:
 	{
 		return EquippedWeapon;
 	}
+
+	EDeadPose GetDeadPose() const
+	{
+		return DeadPose;
+	}
+
 protected:
 	/**
 	 * Properties
 	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Combat|Weapon")
 	EEquipState EquipState = EEquipState::EES_Unequipped;
-
-	UPROPERTY(BlueprintReadOnly)
-	EDeadPose DeadPose = EDeadPose::EAS_Alive;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Weapon")
 	AWeapon* EquippedWeapon;
 
+	UPROPERTY(BlueprintReadOnly)
+	EDeadPose DeadPose = EDeadPose::EAS_Alive;
+	
 	/*
 	 * COMPONENTS
 	 */
