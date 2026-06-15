@@ -150,7 +150,7 @@ void AARPGCharacter::Lookout(const FInputActionValue& Value)
 void AARPGCharacter::EKeyPressed()
 {
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
-	if (OverlappingWeapon && EquipState == EEquipState::EES_Unequipped)
+	if (OverlappingWeapon && ArmedState == EArmedState::EA_Unarmed)
 	{
 		SetOverlappingItem(nullptr);
 		EquippedWeapon = OverlappingWeapon;
@@ -162,21 +162,25 @@ void AARPGCharacter::EKeyPressed()
 		if (CanDisarm())
 		{
 			PlayMontage(ArmDisarmMontage, FName("Disarm"));
-			EquipState = EEquipState::EES_Unequipped;
+			EquipState = EEquipState::EES_Equipped;
 			ActionState = EActionState::EAS_Arming;
+			ArmedState = EArmedState::EA_Unarmed;
 		}
 		else if (CanArm())
 		{
 			PlayMontage(ArmDisarmMontage, FName("Arm"));
 			EquipState = EEquipState::EES_Equipped;
 			ActionState = EActionState::EAS_Arming;
+			ArmedState = EArmedState::EA_Armed;
 		}
 	}
 }
 
 bool AARPGCharacter::CanAttack()
 {
-	return ActionState == EActionState::EAS_Unoccupied && EquipState != EEquipState::EES_Unequipped;
+	return ActionState == EActionState::EAS_Unoccupied
+		&& EquipState != EEquipState::EES_Unequipped
+		&& IsArmed();
 }
 
 void AARPGCharacter::AttackEnd()
@@ -186,13 +190,16 @@ void AARPGCharacter::AttackEnd()
 
 bool AARPGCharacter::CanDisarm()
 {
-	return ActionState == EActionState::EAS_Unoccupied && EquipState != EEquipState::EES_Unequipped;
+	return ActionState == EActionState::EAS_Unoccupied
+		&& EquipState != EEquipState::EES_Unequipped
+		&& ArmedState == EArmedState::EA_Armed;
 }
 
 bool AARPGCharacter::CanArm()
 {
 	return ActionState == EActionState::EAS_Unoccupied &&
-		EquipState == EEquipState::EES_Unequipped &&
+		EquipState == EEquipState::EES_Equipped &&
+		ArmedState == EArmedState::EA_Unarmed &&
 		EquippedWeapon;
 }
 
@@ -202,6 +209,7 @@ void AARPGCharacter::Disarm()
 	{
 		FName SocketName = EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Spear ? FName("SpineSpearSocket") : FName("SpineWeaponSocket");
 		EquippedWeapon->Equip(GetMesh(), SocketName, this, this);
+		ArmedState = EArmedState::EA_Unarmed;
 	}
 }
 
@@ -211,6 +219,7 @@ void AARPGCharacter::Arm()
 	{
 		EquippedWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
 		PickAttackMontageByWeaponType();
+		ArmedState = EArmedState::EA_Armed;
 	}
 }
 

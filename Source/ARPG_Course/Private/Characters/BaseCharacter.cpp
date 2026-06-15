@@ -40,6 +40,11 @@ void ABaseCharacter::AttackEnd()
 {
 }
 
+bool ABaseCharacter::IsArmed()
+{
+	return ArmedState == EArmedState::EA_Armed;
+}
+
 void ABaseCharacter::HitReactEnd()
 {
 }

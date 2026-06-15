@@ -83,6 +83,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	EDeadPose DeadPose = EDeadPose::EAS_Alive;
+
+	UPROPERTY(BlueprintReadOnly)
+	EArmedState ArmedState = EArmedState::EA_Unarmed;
 	
 	/*
 	 * COMPONENTS
@@ -141,6 +144,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual void AttackEnd();
 
+	UFUNCTION(BlueprintCallable)
+	virtual bool IsArmed();
+	
 	UFUNCTION(BlueprintCallable)
 	virtual void HitReactEnd();
 
