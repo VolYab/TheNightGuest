@@ -5,6 +5,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "CustomComponents/AttributesComponent.h"
+#include "CustomComponents/CombatSystemComponent.h"
 #include "Items/Weapons/Weapon.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -13,6 +14,7 @@ ABaseCharacter::ABaseCharacter()
  	PrimaryActorTick.bCanEverTick = true;
 
 	AttributeComponent = CreateDefaultSubobject<UAttributesComponent>(TEXT("AttributesComponent"));
+	CombatSystemComponent = CreateDefaultSubobject<UCombatSystemComponent>(TEXT("CombatSystemComponent"));
 }
 
 void ABaseCharacter::BeginPlay()

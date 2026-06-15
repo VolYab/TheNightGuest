@@ -11,6 +11,7 @@
 #include "Items/Weapons/Weapon.h"
 #include "Characters/ARPGPlayerController.h"
 #include "CustomComponents/AttributesComponent.h"
+#include "CustomComponents/CombatSystemComponent.h"
 #include "Widgets/MainOverlay.h"
 #include "Widgets/ST_HUD.h"
 
@@ -86,11 +87,8 @@ void AARPGCharacter::Attack()
 {
 	if (CanAttack())
 	{
-		/*FName GripName = EquippedWeapon->GetGripName();
-		
-		FName SectionName = GetRandomSectionByName(AttackMontageToPlay, GripName);
-		PlayMontage(AttackMontageToPlay, SectionName);*/
 		ActionState = EActionState::EAS_Attacking;
+		PlayAnimMontage(CombatSystemComponent->SelectAssetFromChooser());
 	}
 }
 
@@ -178,7 +176,8 @@ void AARPGCharacter::EKeyPressed()
 
 bool AARPGCharacter::CanAttack()
 {
-	return ActionState == EActionState::EAS_Unoccupied
+	return ((ActionState == EActionState::EAS_Attacking && CombatSystemComponent->GetComboCount()>0.f) ||
+		ActionState == EActionState::EAS_Unoccupied)
 		&& EquipState != EEquipState::EES_Unequipped
 		&& IsArmed();
 }

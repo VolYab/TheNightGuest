@@ -47,7 +47,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Movement | Character State")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Movement | Character State")
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 	
 	/*

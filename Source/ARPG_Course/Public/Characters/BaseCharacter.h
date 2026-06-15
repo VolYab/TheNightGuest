@@ -9,6 +9,7 @@
 #include "Interfaces/HitInterface.h"
 #include "BaseCharacter.generated.h"
 
+class UCombatSystemComponent;
 class UAttributesComponent;
 class AWeapon;
 /**
@@ -84,7 +85,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	EDeadPose DeadPose = EDeadPose::EAS_Alive;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly)
 	EArmedState ArmedState = EArmedState::EA_Unarmed;
 	
 	/*
@@ -92,6 +93,9 @@ protected:
 	 */
 	UPROPERTY(VisibleAnywhere)
 	UAttributesComponent* AttributeComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	UCombatSystemComponent* CombatSystemComponent;
 	
 	/**
 	 * Animation montages
