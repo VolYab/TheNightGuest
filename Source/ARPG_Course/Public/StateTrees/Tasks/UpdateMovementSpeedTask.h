@@ -6,7 +6,6 @@
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
 #include "UpdateMovementSpeedTask.generated.h"
 
-class AEnemy;
 class AAIController;
 /**
  * StateTree task that changes Enemy's MaxWalkSpeed.
@@ -22,7 +21,7 @@ public:
 	 */
 	/** The Enemy character, whose speed will be updated */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category=Context, meta = (Context))
-	TObjectPtr<AEnemy> Actor;
+	TObjectPtr<APawn> Actor;
 
 	/** The Enemy AIController */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Context", meta = (Context))

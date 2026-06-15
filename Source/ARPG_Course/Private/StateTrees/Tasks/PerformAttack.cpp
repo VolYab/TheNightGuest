@@ -12,13 +12,18 @@ EStateTreeRunStatus UPerformAttack::EnterState(FStateTreeExecutionContext& Conte
 	{
 		return EStateTreeRunStatus::Failed;
 	}
-	Actor->Attack();
+	Enemy = Cast<AEnemy>(Actor);
+	if (!Enemy)
+	{
+		return EStateTreeRunStatus::Failed;
+	}
+	Enemy->Attack();
 	return EStateTreeRunStatus::Running;
 }
 
 EStateTreeRunStatus UPerformAttack::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
-	if (Actor && Actor->GetEnemyState() == EEnemyState::EES_Unoccupied)
+	if (Enemy && Enemy->GetEnemyState() == EEnemyState::EES_Unoccupied)
 	{
 		return EStateTreeRunStatus::Succeeded;
 	}

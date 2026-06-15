@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "CharacterTypes.h"
+#include "CustomComponents/AttributesComponent.h"
 #include "Interfaces/HitInterface.h"
 #include "BaseCharacter.generated.h"
 
@@ -62,6 +63,14 @@ public:
 		return DeadPose;
 	}
 
+	bool IsAlive() const
+	{
+		if (AttributeComponent)
+		{
+			return AttributeComponent->IsAlive();
+		}
+		return DeadPose == EDeadPose::EAS_Alive;
+	}
 protected:
 	/**
 	 * Properties
@@ -126,6 +135,7 @@ protected:
 	 * This is a function to check if a character can attack
 	 * @return true if a character can attack, false if not
 	 */
+	UFUNCTION(BlueprintCallable)
 	virtual bool CanAttack();
 
 	UFUNCTION(BlueprintCallable)

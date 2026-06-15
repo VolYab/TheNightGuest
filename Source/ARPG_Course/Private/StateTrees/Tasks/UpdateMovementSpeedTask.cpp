@@ -15,7 +15,12 @@ EStateTreeRunStatus UUpdateMovementSpeedTask::EnterState(FStateTreeExecutionCont
 	{
 		return EStateTreeRunStatus::Failed;
 	}
-	if (UCharacterMovementComponent* MovementComponent = Actor->GetCharacterMovement())
+	AEnemy* Enemy = Cast<AEnemy>(Actor);
+	if (!Enemy)
+	{
+		return EStateTreeRunStatus::Failed;
+	}
+	if (UCharacterMovementComponent* MovementComponent = Enemy->GetCharacterMovement())
 	{
 		MovementComponent->MaxWalkSpeed = TargetMaxWalkSpeed;
 		return EStateTreeRunStatus::Succeeded;

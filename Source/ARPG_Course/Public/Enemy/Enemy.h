@@ -52,7 +52,7 @@ public:
 
 	virtual void Attack() override;
 protected:
-	UPROPERTY(BlueprintReadWrite, Category="Combat")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Combat")
 	AActor* CombatTarget;
 	
 	/*
@@ -107,10 +107,6 @@ private:
 
 	void ShowHealthBar();
 	void HideHealthBar();
-
-	/** Sends a StateTree event with the given tag to this Enemy's AI StateTreeComponent (if any). */
-	UFUNCTION(BlueprintCallable, Category="AI|StateTree")
-	void SendAIStateTreeEvent(FGameplayTag EventTag) const;
 
 /**
  * Getters and Setters

@@ -37,10 +37,13 @@ void AEnemy::BeginPlay()
 	Tags.Add(FName("Enemy"));
 	HideHealthBar();
 
-	AWeapon* DefaultWeapon = Cast<AWeapon>(AItemSpawner::SpawnItem(this, DefaultWeaponData));
-	DefaultWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
-	EquippedWeapon = DefaultWeapon;
-	EquipState = EEquipState::EES_Equipped;
+	if (AItem* Item = AItemSpawner::SpawnItem(this, DefaultWeaponData))
+	{
+		AWeapon* DefaultWeapon = Cast<AWeapon>(Item);
+        DefaultWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
+        EquippedWeapon = DefaultWeapon;
+        EquipState = EEquipState::EES_Equipped;
+	}
 }
 
 
@@ -93,10 +96,11 @@ void AEnemy::Attack()
 	if (CanAttack())
 	{
 		if (SwordAttackMontage)
-        	{
-        		PlayMontage(SwordAttackMontage);
-        	}
-        	EnemyState = EEnemyState::EES_Attacking;
+        {
+        	PlayMontage(SwordAttackMontage);
+        }
+        EnemyState = EEnemyState::EES_Attacking;
+		bIsAttacking = true;
 	}
 }
 
@@ -153,27 +157,4 @@ void AEnemy::AttackEnd()
 void AEnemy::HitReactEnd()
 {
 	EnemyState = EEnemyState::EES_Unoccupied;
-}
-
-void AEnemy::SendAIStateTreeEvent(FGameplayTag EventTag) const
-{
-	if (!EventTag.IsValid())
-	{
-		return;
-	}
-	AAIController* AICon = Cast<AAIController>(GetController());
-	if (!AICon)
-	{
-		return;
-	}
-	UStateTreeComponent* STComp = AICon->FindComponentByClass<UStateTreeComponent>();
-	if (!STComp)
-	{
-		// Try also on the pawn itself (in case the component is attached to the character)
-		STComp = FindComponentByClass<UStateTreeComponent>();
-	}
-	if (STComp)
-	{
-		STComp->SendStateTreeEvent(EventTag);
-	}
 }

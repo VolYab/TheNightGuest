@@ -6,8 +6,9 @@
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
 #include "PerformAttack.generated.h"
 
-class AAIController;
 class AEnemy;
+class AAIController;
+
 /**
  * StateTree task that performs Enemy's attack.
  */
@@ -25,7 +26,7 @@ class ARPG_COURSE_API UPerformAttack : public UStateTreeTaskBlueprintBase
 public:
 	/** The Enemy character, who performs an attack */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Context", meta = (Context))
-	TObjectPtr<AEnemy> Actor;
+	TObjectPtr<APawn> Actor;
 
 	/** The Enemy AIController */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Context", meta = (Context))
@@ -56,4 +57,8 @@ protected:
 	 * @param Transition The transition that triggered this state
 	 */
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+
+private:
+	UPROPERTY()
+	AEnemy* Enemy;
 };

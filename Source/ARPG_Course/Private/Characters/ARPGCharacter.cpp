@@ -86,10 +86,10 @@ void AARPGCharacter::Attack()
 {
 	if (CanAttack())
 	{
-		FName GripName = EquippedWeapon->GetGripName();
+		/*FName GripName = EquippedWeapon->GetGripName();
 		
 		FName SectionName = GetRandomSectionByName(AttackMontageToPlay, GripName);
-		PlayMontage(AttackMontageToPlay, SectionName);
+		PlayMontage(AttackMontageToPlay, SectionName);*/
 		ActionState = EActionState::EAS_Attacking;
 	}
 }
