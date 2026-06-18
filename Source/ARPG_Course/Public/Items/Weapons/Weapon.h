@@ -37,10 +37,10 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	EWeaponType WeaponType = EWeaponType::EWT_Sword;
+	EWeaponType WeaponType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	EGripType GripType = EGripType::EGT_1Hand;
+	EGripType GripType;
 	
 	virtual void BeginPlay() override;
 	

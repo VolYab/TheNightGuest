@@ -76,17 +76,17 @@ protected:
 	/**
 	 * Properties
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Combat|Weapon")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Combat|State")
 	EEquipState EquipState = EEquipState::EES_Unequipped;
 	
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Combat|State")
+	EArmedState ArmedState = EArmedState::EA_Unarmed;
+    
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Weapon")
 	AWeapon* EquippedWeapon;
 
 	UPROPERTY(BlueprintReadOnly)
 	EDeadPose DeadPose = EDeadPose::EAS_Alive;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly)
-	EArmedState ArmedState = EArmedState::EA_Unarmed;
 	
 	/*
 	 * COMPONENTS

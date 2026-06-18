@@ -12,6 +12,8 @@
 #include "Characters/ARPGPlayerController.h"
 #include "CustomComponents/AttributesComponent.h"
 #include "CustomComponents/CombatSystemComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Subsystems/WeaponEventManager.h"
 #include "Widgets/MainOverlay.h"
 #include "Widgets/ST_HUD.h"
 
@@ -115,7 +117,7 @@ void AARPGCharacter::GetHit_Implementation(const FVector& ImpactPoint)
 
 void AARPGCharacter::Move(const FInputActionValue& Value)
 {
-	if (ActionState == EActionState::EAS_HitReaction) return;
+	if (ActionState != EActionState::EAS_Unoccupied) return;
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	// Find out forward and right vector based on controller rotation
@@ -128,7 +130,7 @@ void AARPGCharacter::Move(const FInputActionValue& Value)
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 	// Forward / Backward
-	if (EquipState == EEquipState::EES_Equipped && EquippedWeapon->GetGripType() == EGripType::EGT_2Hand)
+	if (ArmedState == EArmedState::EA_Armed && EquippedWeapon->GetGripType() == EGripType::EGT_2Hand)
 	{
 		MovementVector = MovementVector / 3;
 	}
@@ -154,20 +156,26 @@ void AARPGCharacter::EKeyPressed()
 		EquippedWeapon = OverlappingWeapon;
 		Arm();
 		EquipState = EEquipState::EES_Equipped;
+		if (UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
+		{
+			UWeaponEventManager* WeaponEventManager = GameInstance->GetSubsystem<UWeaponEventManager>();
+			if (WeaponEventManager)
+			{
+				WeaponEventManager->OnWeaponArmed.Broadcast(EquippedWeapon->GetWeaponType());
+			}
+		}
 	}
 	else
 	{
 		if (CanDisarm())
 		{
 			PlayMontage(ArmDisarmMontage, FName("Disarm"));
-			EquipState = EEquipState::EES_Equipped;
 			ActionState = EActionState::EAS_Arming;
 			ArmedState = EArmedState::EA_Unarmed;
 		}
 		else if (CanArm())
 		{
 			PlayMontage(ArmDisarmMontage, FName("Arm"));
-			EquipState = EEquipState::EES_Equipped;
 			ActionState = EActionState::EAS_Arming;
 			ArmedState = EArmedState::EA_Armed;
 		}
@@ -217,7 +225,6 @@ void AARPGCharacter::Arm()
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
-		PickAttackMontageByWeaponType();
 		ArmedState = EArmedState::EA_Armed;
 	}
 }
@@ -262,25 +269,6 @@ void AARPGCharacter::InitializeMainOverlay()
 			MainOverlay->SetHealthPercent(AttributeComponent->GetHealthPercent());
 			MainOverlay->SetStaminaPercent(AttributeComponent->GetStaminaPercent());
 		}
-	}
-}
-
-void AARPGCharacter::PickAttackMontageByWeaponType()
-{
-	switch (EquippedWeapon->GetWeaponType())
-	{
-	case EWeaponType::EWT_Sword:
-		AttackMontageToPlay = SwordAttackMontage;
-		break;
-	case EWeaponType::EWT_Axe:
-		AttackMontageToPlay = SwordAttackMontage;
-		break;
-	case EWeaponType::EWT_Spear:
-		AttackMontageToPlay = SpearAttackMontage;
-		break;
-	default:
-		AttackMontageToPlay = SwordAttackMontage;
-		break;
 	}
 }
 

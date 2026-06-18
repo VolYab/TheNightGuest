@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Characters/BaseCharacter.h"
-#include "GameplayTagContainer.h"
 #include "Enemy.generated.h"
 
 class UItemDataAsset;

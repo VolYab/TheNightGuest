@@ -44,6 +44,10 @@ void AWeapon::AttachMeshToSocket(USceneComponent* InParent, FName InSocketName)
 {
 	FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
 	StaticMesh->AttachToComponent(InParent, TransformRules, InSocketName);
+	
+	FName HandlerSocketName = InSocketName == FName(TEXT("HandGrip_R")) ? FName(TEXT("SOCKET_HandlerOffsetSocket")) : FName(TEXT("SpineOffsetSocket"));
+	FTransform HandlerSocketTransform = StaticMesh->GetSocketTransform(HandlerSocketName, RTS_Component);
+	StaticMesh->SetRelativeTransform(HandlerSocketTransform.Inverse());
 }
 
 /*

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Items/Weapons/Weapon.h"
 #include "CombatSystemComponent.generated.h"
 
 enum class EWeaponType : uint8;
@@ -20,7 +19,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION()
-	void StartComboAttack();
+	void SetWeaponType(EWeaponType NewWeaponType);
 
 	UFUNCTION()
 	UAnimMontage* SelectAssetFromChooser();
@@ -35,7 +34,7 @@ protected:
 	UChooserTable* WeaponChooserTable;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	EWeaponType WeaponType = EWeaponType::EWT_Sword;
+	EWeaponType WeaponType;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	float ComboCount = 0;

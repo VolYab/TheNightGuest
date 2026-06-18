@@ -11,9 +11,6 @@
 #include "Widgets/HealthBarComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Items/Weapons/Weapon.h"
-#include "AIController.h"
-#include "Components/StateTreeComponent.h"
-#include "GameplayTagContainer.h"
 
 AEnemy::AEnemy()
 {
@@ -40,9 +37,13 @@ void AEnemy::BeginPlay()
 	if (AItem* Item = AItemSpawner::SpawnItem(this, DefaultWeaponData))
 	{
 		AWeapon* DefaultWeapon = Cast<AWeapon>(Item);
-        DefaultWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
-        EquippedWeapon = DefaultWeapon;
-        EquipState = EEquipState::EES_Equipped;
+		if (IsValid(DefaultWeapon->GetStaticMeshComponent()))
+		{
+			DefaultWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
+            EquippedWeapon = DefaultWeapon;
+            EquipState = EEquipState::EES_Equipped;
+            ArmedState = EArmedState::EA_Armed;
+		}
 	}
 }
 

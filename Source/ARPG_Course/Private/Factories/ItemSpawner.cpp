@@ -3,10 +3,8 @@
 
 #include "Factories/ItemSpawner.h"
 #include "DataAssets/ItemDataAsset.h"
-#include "Engine/AssetManager.h"
-#include "Engine/StreamableManager.h"
+#include "HAL/Platform.h"
 #include "Items/Item.h"
-#include "Kismet/GameplayStatics.h"
 
 AItemSpawner::AItemSpawner()
 {
@@ -55,8 +53,9 @@ AItem* AItemSpawner::SpawnItem(UObject* WorldContextObject, UItemDataAsset* Item
 	const FVector Location(0.0f, 0.0f, 0.0f);
 	const FRotator Rotation(0.0f, 0.0f, 0.0f);
 
+	FTransform SpawnTransform = FTransform(Rotation, Location);
 	// Spawn the Item
-	AItem* SpawnedItem = WorldContextObject->GetWorld()->SpawnActorDeferred<AItem>(LoadedClass, FTransform(Rotation, Location));
+	AItem* SpawnedItem = WorldContextObject->GetWorld()->SpawnActorDeferred<AItem>(LoadedClass, SpawnTransform);
 	if (!SpawnedItem)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn the item."));

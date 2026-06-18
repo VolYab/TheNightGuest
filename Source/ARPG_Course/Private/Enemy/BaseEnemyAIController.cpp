@@ -77,7 +77,6 @@ void ABaseEnemyAIController::SetupAIPerception()
 
 void ABaseEnemyAIController::HandlePerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Perception updated: %d actor(s)"), UpdatedActors.Num());
 }
 
 void ABaseEnemyAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
@@ -95,10 +94,6 @@ void ABaseEnemyAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAISti
 		// trigger Aggressive state
 		SendStateTreeEvent(FName("StateTree.Enemy.Aggressive"));
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Target perception %s: %s (Tag: %s)"),
-		bSensed ? TEXT("updated") : TEXT("lost"),
-		*Actor->GetName(),
-		*Stimulus.Tag.ToString());
 }
 
 void ABaseEnemyAIController::HandleTargetPerceptionForgotten(AActor* Actor)
@@ -107,7 +102,6 @@ void ABaseEnemyAIController::HandleTargetPerceptionForgotten(AActor* Actor)
 	{
 		return;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Target perception forgotten: %s"), *Actor->GetName());
 }
 
 void ABaseEnemyAIController::SendStateTreeEvent(FName EventName)

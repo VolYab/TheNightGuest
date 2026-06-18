@@ -4,6 +4,8 @@
 #include "CustomComponents/CombatSystemComponent.h"
 #include "Chooser.h"
 #include "ChooserFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "Subsystems/WeaponEventManager.h"
 
 UCombatSystemComponent::UCombatSystemComponent()
 {
@@ -13,6 +15,14 @@ UCombatSystemComponent::UCombatSystemComponent()
 void UCombatSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	if (UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
+	{
+		UWeaponEventManager* WeaponEventManager = GameInstance->GetSubsystem<UWeaponEventManager>();
+		if (WeaponEventManager)
+		{
+			WeaponEventManager->OnWeaponArmed.AddUniqueDynamic(this, &UCombatSystemComponent::SetWeaponType);
+		}
+	}
 }
 
 void UCombatSystemComponent::IncreaseComboCount()
@@ -35,9 +45,9 @@ void UCombatSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UCombatSystemComponent::StartComboAttack()
+void UCombatSystemComponent::SetWeaponType(EWeaponType NewWeaponType)
 {
-	
+	WeaponType = NewWeaponType;
 }
 
 UAnimMontage* UCombatSystemComponent::SelectAssetFromChooser()

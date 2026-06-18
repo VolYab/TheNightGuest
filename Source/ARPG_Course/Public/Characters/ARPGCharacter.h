@@ -125,11 +125,6 @@ private:
 	void InitializeMainOverlay();
 
 	/**
-	 * This function checks the current EquippedWeapon type and sets AttackMontageToPlay to correct montage
-	 */
-	void PickAttackMontageByWeaponType();
-
-	/**
 	 * This function randomly selects one of the sections with names starting with the SectionName parameter
 	 * @param Montage AnimMontage to pick section from
 	 * @param Name Name to filter sections
