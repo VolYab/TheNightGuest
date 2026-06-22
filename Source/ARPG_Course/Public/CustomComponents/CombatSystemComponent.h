@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "CombatSystemComponent.generated.h"
 
+enum class EGripType : uint8;
 enum class EWeaponType : uint8;
 class UChooserTable;
 
@@ -19,7 +20,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION()
-	void SetWeaponType(EWeaponType NewWeaponType);
+	void SetWeaponProperties(EWeaponType NewWeaponType, EGripType NewGripType);
 
 	UFUNCTION()
 	UAnimMontage* SelectAssetFromChooser();
@@ -35,6 +36,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	EWeaponType WeaponType;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	EGripType GripType;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool CanAttack = true;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	float ComboCount = 0;

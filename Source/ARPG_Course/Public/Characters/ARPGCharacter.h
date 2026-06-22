@@ -49,7 +49,9 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Movement | Character State")
 	EActionState ActionState = EActionState::EAS_Unoccupied;
-	
+
+	UPROPERTY(VisibleInstanceOnly, Category = "Movement | Character State")
+	bool bCanContinueCombo = false;
 	/*
 	 * Input Actions
 	 */
@@ -139,5 +141,8 @@ public:
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
 
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
+
+	UFUNCTION()
+	FORCEINLINE void SetCanContinueCombo(bool CanCombo) { bCanContinueCombo = CanCombo; }
 	
 };

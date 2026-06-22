@@ -15,12 +15,14 @@ UCombatSystemComponent::UCombatSystemComponent()
 void UCombatSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	FChooserEvaluationContext Context;
+	Context.AddObjectParam(StaticClass());
 	if (UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
 	{
 		UWeaponEventManager* WeaponEventManager = GameInstance->GetSubsystem<UWeaponEventManager>();
 		if (WeaponEventManager)
 		{
-			WeaponEventManager->OnWeaponArmed.AddUniqueDynamic(this, &UCombatSystemComponent::SetWeaponType);
+			WeaponEventManager->OnWeaponArmed.AddUniqueDynamic(this, &UCombatSystemComponent::SetWeaponProperties);
 		}
 	}
 }
@@ -28,16 +30,26 @@ void UCombatSystemComponent::BeginPlay()
 void UCombatSystemComponent::IncreaseComboCount()
 {
 	ComboCount++;
+	ResetComboCD();
 }
 
 void UCombatSystemComponent::ResetComboCount()
 {
 	ComboCount = 0;
+	ResetComboCD();
 }
 
 void UCombatSystemComponent::ResetComboCD()
 {
-	
+	CanAttack = true;
+	if (UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
+	{
+		UWeaponEventManager* WeaponEventManager = GameInstance->GetSubsystem<UWeaponEventManager>();
+		if (WeaponEventManager)
+		{
+			WeaponEventManager->OnComboChange.Broadcast(CanAttack);
+		}
+	}
 }
 
 void UCombatSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -45,17 +57,15 @@ void UCombatSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UCombatSystemComponent::SetWeaponType(EWeaponType NewWeaponType)
+void UCombatSystemComponent::SetWeaponProperties(EWeaponType NewWeaponType, EGripType NewGripType)
 {
 	WeaponType = NewWeaponType;
+	GripType = NewGripType;
 }
 
 UAnimMontage* UCombatSystemComponent::SelectAssetFromChooser()
 {
 	if (!WeaponChooserTable) return nullptr;
-
-	FChooserEvaluationContext Context;
-	Context.AddObjectParam(StaticClass());
 	
 	TArray<UObject*> SelectedResults = UChooserFunctionLibrary::EvaluateChooserMulti(
 		this, 
@@ -66,7 +76,16 @@ UAnimMontage* UCombatSystemComponent::SelectAssetFromChooser()
 	// Process the matched assets
 	if (SelectedResults.Num() > 0)
 	{
-		return  Cast<UAnimMontage>(SelectedResults[0]);
+		CanAttack = false;
+		if (UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
+		{
+			UWeaponEventManager* WeaponEventManager = GameInstance->GetSubsystem<UWeaponEventManager>();
+			if (WeaponEventManager)
+			{
+				WeaponEventManager->OnComboChange.Broadcast(CanAttack);
+			}
+		}
+		return Cast<UAnimMontage>(SelectedResults[0]);
 	}
 	return nullptr;
 }

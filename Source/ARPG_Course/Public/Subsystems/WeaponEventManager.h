@@ -7,7 +7,8 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "WeaponEventManager.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponArmed, EWeaponType, WeaponType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnComboChange, bool, CanAttack);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponArmed, EWeaponType, WeaponType, EGripType, GripType);
 
 /**
  * 
@@ -20,4 +21,7 @@ class ARPG_COURSE_API UWeaponEventManager : public UGameInstanceSubsystem
 public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category="Arming events")
 	FOnWeaponArmed OnWeaponArmed;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category="Arming events")
+	FOnComboChange OnComboChange;
 };

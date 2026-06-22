@@ -54,6 +54,15 @@ void AARPGCharacter::BeginPlay()
 		InitializeMainOverlay();
 	}
 	Tags.Add(FName("EngageableTarget"));
+
+	if (UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
+	{
+		UWeaponEventManager* WeaponEventManager = GameInstance->GetSubsystem<UWeaponEventManager>();
+		if (WeaponEventManager)
+		{
+			WeaponEventManager->OnComboChange.AddUniqueDynamic(this, &AARPGCharacter::SetCanContinueCombo);
+		}
+	}
 }
 
 void AARPGCharacter::Tick(float DeltaTime)
@@ -161,7 +170,7 @@ void AARPGCharacter::EKeyPressed()
 			UWeaponEventManager* WeaponEventManager = GameInstance->GetSubsystem<UWeaponEventManager>();
 			if (WeaponEventManager)
 			{
-				WeaponEventManager->OnWeaponArmed.Broadcast(EquippedWeapon->GetWeaponType());
+				WeaponEventManager->OnWeaponArmed.Broadcast(EquippedWeapon->GetWeaponType(), EquippedWeapon->GetGripType());
 			}
 		}
 	}
@@ -184,8 +193,7 @@ void AARPGCharacter::EKeyPressed()
 
 bool AARPGCharacter::CanAttack()
 {
-	return ((ActionState == EActionState::EAS_Attacking && CombatSystemComponent->GetComboCount()>0.f) ||
-		ActionState == EActionState::EAS_Unoccupied)
+	return ((ActionState == EActionState::EAS_Attacking && bCanContinueCombo) || ActionState == EActionState::EAS_Unoccupied)
 		&& EquipState != EEquipState::EES_Unequipped
 		&& IsArmed();
 }
