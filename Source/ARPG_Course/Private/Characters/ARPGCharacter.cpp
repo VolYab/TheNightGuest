@@ -10,11 +10,23 @@
 #include "Items/Item.h"
 #include "Items/Weapons/Weapon.h"
 #include "Characters/ARPGPlayerController.h"
+#include "CustomComponents/AttributesComponent.h"
+#include "CustomComponents/CombatSystemComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Subsystems/WeaponEventManager.h"
+#include "Widgets/MainOverlay.h"
+#include "Widgets/ST_HUD.h"
 
 AARPGCharacter::AARPGCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	GetMesh()->SetCollisionObjectType(ECC_WorldDynamic);
+	GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+	GetMesh()->SetGenerateOverlapEvents(true);
+	
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(GetRootComponent());
 	SpringArm->TargetArmLength = 300.f;
@@ -35,16 +47,22 @@ void AARPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	PlayerController = Cast<APlayerController>(GetController());
 	if (PlayerController)
 	{
-		UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
-		if (Subsystem)
+		InitializeInputSubsystem();
+		InitializeMainOverlay();
+	}
+	Tags.Add(FName("EngageableTarget"));
+
+	if (UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
+	{
+		UWeaponEventManager* WeaponEventManager = GameInstance->GetSubsystem<UWeaponEventManager>();
+		if (WeaponEventManager)
 		{
-			Subsystem->AddMappingContext(InputActionContext, 0);
+			WeaponEventManager->OnComboChange.AddUniqueDynamic(this, &AARPGCharacter::SetCanContinueCombo);
 		}
 	}
-	Tags.Add(FName("ARPGCharacter"));
 }
 
 void AARPGCharacter::Tick(float DeltaTime)
@@ -76,9 +94,39 @@ void AARPGCharacter::PossessedBy(AController* NewController)
 	}
 }
 
+void AARPGCharacter::Attack()
+{
+	if (CanAttack())
+	{
+		ActionState = EActionState::EAS_Attacking;
+		PlayAnimMontage(CombatSystemComponent->SelectAssetFromChooser());
+	}
+}
+
+float AARPGCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
+                                 AActor* DamageCauser)
+{
+	if (AttributeComponent)
+	{
+		AttributeComponent->ReceiveDamage(DamageAmount);
+		UpdateHealthBar();
+	}
+	return DamageAmount;
+}
+
+void AARPGCharacter::GetHit_Implementation(const FVector& ImpactPoint)
+{
+	Super::GetHit_Implementation(ImpactPoint);
+	if (AttributeComponent && AttributeComponent->IsAlive())
+	{
+		ActionState = EActionState::EAS_HitReaction;
+	}
+	SetEnableBoxCollision(ECollisionEnabled::NoCollision);
+}
+
 void AARPGCharacter::Move(const FInputActionValue& Value)
 {
-	//if (ActionState != EActionState::EAS_Unoccupied) return;
+	if (ActionState != EActionState::EAS_Unoccupied) return;
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	// Find out forward and right vector based on controller rotation
@@ -91,7 +139,7 @@ void AARPGCharacter::Move(const FInputActionValue& Value)
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 	// Forward / Backward
-	if (CharacterState == ECharacterState::ECS_EquippedTwoHandedWeapon || CharacterState == ECharacterState::ECS_EquippedTwoHandedSpear)
+	if (ArmedState == EArmedState::EA_Armed && EquippedWeapon->GetGripType() == EGripType::EGT_2Hand)
 	{
 		MovementVector = MovementVector / 3;
 	}
@@ -111,103 +159,62 @@ void AARPGCharacter::Lookout(const FInputActionValue& Value)
 void AARPGCharacter::EKeyPressed()
 {
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
-	if (OverlappingWeapon && CharacterState == ECharacterState::ECS_Unequipped)
+	if (OverlappingWeapon && ArmedState == EArmedState::EA_Unarmed)
 	{
-		OverlappingWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
 		SetOverlappingItem(nullptr);
 		EquippedWeapon = OverlappingWeapon;
-		SetCharacterState();
+		Arm();
+		EquipState = EEquipState::EES_Equipped;
+		if (UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
+		{
+			UWeaponEventManager* WeaponEventManager = GameInstance->GetSubsystem<UWeaponEventManager>();
+			if (WeaponEventManager)
+			{
+				WeaponEventManager->OnWeaponArmed.Broadcast(EquippedWeapon->GetWeaponType(), EquippedWeapon->GetGripType());
+			}
+		}
 	}
 	else
 	{
 		if (CanDisarm())
 		{
 			PlayMontage(ArmDisarmMontage, FName("Disarm"));
-			CharacterState = ECharacterState::ECS_Unequipped;
 			ActionState = EActionState::EAS_Arming;
+			ArmedState = EArmedState::EA_Unarmed;
 		}
 		else if (CanArm())
 		{
 			PlayMontage(ArmDisarmMontage, FName("Arm"));
-			SetCharacterState();
 			ActionState = EActionState::EAS_Arming;
+			ArmedState = EArmedState::EA_Armed;
 		}
 	}
 }
 
-void AARPGCharacter::Attack()
+bool AARPGCharacter::CanAttack()
 {
-	if (CanAttack())
-	{
-		switch(CharacterState)
-		{
-		case ECharacterState::ECS_EquippedTwoHandedWeapon:
-			PlayMontage(SwordAttackMontage, FName("Attack_2HWeapon"));
-			break;
-		case ECharacterState::ECS_EquippedOneHandedWeapon:
-			PlayMontage(SwordAttackMontage, FName("Attack_1HWeapon"));
-			break;
-		case ECharacterState::ECS_EquippedOneHandedSpear:
-			PlayMontage(SpearAttackMontage, FName("Attack_1HWeapon"));
-			break;
-		case ECharacterState::ECS_EquippedTwoHandedSpear:
-			PlayMontage(SpearAttackMontage, FName("Attack_2HWeapon"));
-			break;
-		default:
-			PlayMontage(SwordAttackMontage);
-			break;
-		}
-		ActionState = EActionState::EAS_Attacking;
-	}
+	return ((ActionState == EActionState::EAS_Attacking && bCanContinueCombo) || ActionState == EActionState::EAS_Unoccupied)
+		&& EquipState != EEquipState::EES_Unequipped
+		&& IsArmed();
 }
 
-void AARPGCharacter::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName)
+void AARPGCharacter::AttackEnd()
 {
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AnimMontageToPlay)
-	{
-		AnimInstance->Montage_Play(AnimMontageToPlay);
-		if (SectionName == "")
-		{
-			//Check the number of sections in AnimMontage to generate a random index
-			const int32 NumberOfSections = AnimMontageToPlay->GetNumSections() - 1;
-			const int32 RandomSectionIndex = FMath::RandRange(0, NumberOfSections);
-			//Get Section Name using a random index
-			const FName RandomSectionName = AnimMontageToPlay->GetSectionName(RandomSectionIndex);
-			AnimInstance->Montage_JumpToSection(RandomSectionName, AnimMontageToPlay);
-		}
-		else
-		{
-			// Collect all sections with names starting with the SectionName parameter
-			TArray<FName> MatchingSections;
-			for (int32 i = 0; i < AnimMontageToPlay->GetNumSections(); ++i)
-			{
-				const FName CurrentSectionName = AnimMontageToPlay->GetSectionName(i);
-				if (CurrentSectionName.ToString().StartsWith(SectionName.ToString()))
-				{
-					MatchingSections.Add(CurrentSectionName);
-				}
-			}
-
-			// Randomly select one of the matching sections
-			if (MatchingSections.Num() > 0)
-			{
-				const int32 RandomIndex = FMath::RandRange(0, MatchingSections.Num() - 1);
-				AnimInstance->Montage_JumpToSection(MatchingSections[RandomIndex], AnimMontageToPlay);
-			}
-		}
-	}
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
 bool AARPGCharacter::CanDisarm()
 {
-	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped;
+	return ActionState == EActionState::EAS_Unoccupied
+		&& EquipState != EEquipState::EES_Unequipped
+		&& ArmedState == EArmedState::EA_Armed;
 }
 
 bool AARPGCharacter::CanArm()
 {
 	return ActionState == EActionState::EAS_Unoccupied &&
-		CharacterState == ECharacterState::ECS_Unequipped &&
+		EquipState == EEquipState::EES_Equipped &&
+		ArmedState == EArmedState::EA_Unarmed &&
 		EquippedWeapon;
 }
 
@@ -215,19 +222,9 @@ void AARPGCharacter::Disarm()
 {
 	if (EquippedWeapon)
 	{
-		FName SocketName;
-		switch (EquippedWeapon->GetWeaponType())
-		{
-		case EWeaponType::EWT_1HSpear:
-			SocketName = FName("Spine1HSpearSocket");
-			break;
-		case EWeaponType::EWT_2HSpear:
-			SocketName = FName("Spine2HSpearSocket");
-			break;
-		default:
-			SocketName = FName("SpineWeaponSocket");
-		}
+		FName SocketName = EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Spear ? FName("SpineSpearSocket") : FName("SpineWeaponSocket");
 		EquippedWeapon->Equip(GetMesh(), SocketName, this, this);
+		ArmedState = EArmedState::EA_Unarmed;
 	}
 }
 
@@ -236,10 +233,84 @@ void AARPGCharacter::Arm()
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
+		ArmedState = EArmedState::EA_Armed;
 	}
 }
 
 void AARPGCharacter::ArmEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
+}
+
+void AARPGCharacter::HitReactEnd()
+{
+	Super::HitReactEnd();
+	if (ActionState == EActionState::EAS_HitReaction)
+	{
+		ActionState = EActionState::EAS_Unoccupied;
+	}
+}
+
+void AARPGCharacter::Die()
+{
+	Super::Die();
+	ActionState = EActionState::EAS_Dead;
+}
+
+void AARPGCharacter::InitializeInputSubsystem()
+{
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
+	if (Subsystem)
+	{
+		Subsystem->AddMappingContext(InputActionContext, 0);
+	}
+}
+
+void AARPGCharacter::InitializeMainOverlay()
+{
+	AST_HUD* ST_HUD = Cast<AST_HUD>(PlayerController->GetHUD());
+	if (ST_HUD)
+	{
+		MainOverlay = ST_HUD->GetMainOverlay();
+		if (MainOverlay)
+		{
+			MainOverlay->SetHealthPercent(AttributeComponent->GetHealthPercent());
+			MainOverlay->SetStaminaPercent(AttributeComponent->GetStaminaPercent());
+		}
+	}
+}
+
+FName AARPGCharacter::GetRandomSectionByName(const UAnimMontage* Montage, const FName Name)
+{
+	if (!Montage || Name == "")
+	{
+		return FName("None");
+	}
+	// Collect all sections with names starting with the SectionName parameter
+	TArray<FName> MatchingSections;
+	for (int32 i = 0; i < AttackMontageToPlay->GetNumSections(); ++i)
+	{
+		const FName CurrentSectionName = Montage->GetSectionName(i);
+		if (CurrentSectionName.ToString().StartsWith(Name.ToString()))
+		{
+			MatchingSections.Add(CurrentSectionName);
+		}
+	}
+		
+	// Randomly select one of the matching sections
+	if (MatchingSections.Num() > 0)
+	{
+		const int32 RandomIndex = FMath::RandRange(0, MatchingSections.Num() - 1);
+		return MatchingSections[RandomIndex];
+	}
+	return FName("None");
+}
+
+
+void AARPGCharacter::UpdateHealthBar()
+{
+	if (MainOverlay)
+	{
+		MainOverlay->SetHealthPercent(AttributeComponent->GetHealthPercent());
+	}
 }

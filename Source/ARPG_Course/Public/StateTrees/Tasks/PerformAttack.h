@@ -6,8 +6,9 @@
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
 #include "PerformAttack.generated.h"
 
-class AAIController;
 class AEnemy;
+class AAIController;
+
 /**
  * StateTree task that performs Enemy's attack.
  */
@@ -25,7 +26,7 @@ class ARPG_COURSE_API UPerformAttack : public UStateTreeTaskBlueprintBase
 public:
 	/** The Enemy character, who performs an attack */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Context", meta = (Context))
-	TObjectPtr<AEnemy> Actor;
+	TObjectPtr<APawn> Actor;
 
 	/** The Enemy AIController */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Context", meta = (Context))
@@ -41,26 +42,23 @@ protected:
 	 * @param Context The execution context for the state tree.
 	 * @param Transition The transition result containing information about the state change.
 	*/
-	EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
 
 	/**
 	 * Called when state ticks
 	 * @param Context The execution context for the state tree
 	 * @param DeltaTime 
 	 */
-	EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
+	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
 
 	/**
 	 * Called when state finishes
 	 * @param Context The execution context for the state tree
 	 * @param Transition The transition that triggered this state
 	 */
-	void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
-private:
-	/*
-	 * Properties
-	*/
+	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
 
-	// Indicates whether the montage has finished playing
-	bool bIsAttackMontageFinished = false;
+private:
+	UPROPERTY()
+	AEnemy* Enemy;
 };

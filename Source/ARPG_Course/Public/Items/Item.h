@@ -26,7 +26,7 @@ public:
 protected:
 	/*  VARIABLES  */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    class UStaticMeshComponent* StaticMesh;
+    UStaticMeshComponent* StaticMesh;
 
 	UPROPERTY(VisibleAnywhere)
 	class UWidgetComponent* PopupWidget;
@@ -87,5 +87,15 @@ public:
 	virtual void SetItemState(EItemState NewItemState)
 	{
 		this->ItemState = NewItemState;
+	}
+
+	class UStaticMeshComponent* GetStaticMeshComponent() const
+	{
+		return StaticMesh;
+	}
+
+	void SetStaticMeshComponent(class UStaticMeshComponent* NewStaticMesh)
+	{
+		this->StaticMesh = NewStaticMesh;
 	}
 };

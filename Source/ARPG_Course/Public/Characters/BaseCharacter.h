@@ -5,9 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "CharacterTypes.h"
+#include "CustomComponents/AttributesComponent.h"
 #include "Interfaces/HitInterface.h"
 #include "BaseCharacter.generated.h"
 
+class UCombatSystemComponent;
 class UAttributesComponent;
 class AWeapon;
 /**
@@ -41,46 +43,66 @@ public:
 	 * @param ImpactPoint Point of impact.
 	 */
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+
+	/**
+	 * This is a base function to perform an attack
+	 */
+	virtual void Attack();
 	
-	ECharacterState GetCharacterState() const
+	EEquipState GetEquipState() const
 	{
-		return CharacterState;
-	}
-	void SetCharacterState();
-
-	bool IsAttackMontageEnded() const
-	{
-		return bIsAttackMontageEnded;
+		return EquipState;
 	}
 
-	void SetIsAttackMontageEnded(bool newIsAttackMontageEnded)
+	AWeapon* GetEquippedWeapon() const
 	{
-		this->bIsAttackMontageEnded = newIsAttackMontageEnded;
+		return EquippedWeapon;
+	}
+
+	EDeadPose GetDeadPose() const
+	{
+		return DeadPose;
+	}
+
+	bool IsAlive() const
+	{
+		if (AttributeComponent)
+		{
+			return AttributeComponent->IsAlive();
+		}
+		return DeadPose == EDeadPose::EAS_Alive;
 	}
 protected:
 	/**
 	 * Properties
 	 */
-	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
-	EActionState ActionState = EActionState::EAS_Unoccupied;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Combat|State")
+	EEquipState EquipState = EEquipState::EES_Unequipped;
+	
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Combat|State")
+	EArmedState ArmedState = EArmedState::EA_Unarmed;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Weapon")
+	AWeapon* EquippedWeapon;
 
 	UPROPERTY(BlueprintReadOnly)
 	EDeadPose DeadPose = EDeadPose::EAS_Alive;
 	
-	UPROPERTY(VisibleAnywhere, Category="Combat|Weapon")
-	AWeapon* EquippedWeapon;
-
 	/*
 	 * COMPONENTS
 	 */
 	UPROPERTY(VisibleAnywhere)
 	UAttributesComponent* AttributeComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	UCombatSystemComponent* CombatSystemComponent;
 	
 	/**
 	 * Animation montages
 	 */
-	bool bIsAttackMontageEnded = false;
-
+	UPROPERTY(VisibleInstanceOnly, Category = "Animation|Montages")
+	UAnimMontage* AttackMontageToPlay;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Animation|Montages")
 	UAnimMontage* SwordAttackMontage;
 
@@ -117,18 +139,20 @@ protected:
 	virtual void BeginPlay() override;
 
 	/**
-	 * This is a base function to perform an attack
-	 */
-	virtual void Attack();
-
-	/**
 	 * This is a function to check if a character can attack
 	 * @return true if a character can attack, false if not
 	 */
-	bool CanAttack();
+	UFUNCTION(BlueprintCallable)
+	virtual bool CanAttack();
 
 	UFUNCTION(BlueprintCallable)
 	virtual void AttackEnd();
+
+	UFUNCTION(BlueprintCallable)
+	virtual bool IsArmed();
+	
+	UFUNCTION(BlueprintCallable)
+	virtual void HitReactEnd();
 
 	/**
 	 * This function handles death processes
@@ -144,14 +168,6 @@ protected:
 	 * @param SectionName Section name in montage to play, if provided. If not provided - a random section will be played.
 	 */
 	virtual void PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName = "");
-
-	/**
-	 * Handler to run when the montage is ended
-	 * @param AnimMontage Animation montage which is played
-	 * @param bInterrupted Is montage finished or interrupted
-	 */
-	UFUNCTION()
-	void HandleMontageEnded(UAnimMontage* AnimMontage, bool bInterrupted);
 private:
 
 	/**

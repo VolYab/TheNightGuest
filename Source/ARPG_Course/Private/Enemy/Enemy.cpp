@@ -2,10 +2,11 @@
 
 
 #include "Enemy/Enemy.h"
+
+#include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "CustomComponents/AttributesComponent.h"
-#include "DataAssets/ItemDataAsset.h"
 #include "Factories/ItemSpawner.h"
 #include "Widgets/HealthBarComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -30,14 +31,20 @@ AEnemy::AEnemy()
 void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	if (HealthBarWidget)
-	{
-		HealthBarWidget->SetVisibility(false);
-	}
+	Tags.Add(FName("Enemy"));
+	HideHealthBar();
 
-	AWeapon* DefaultWeapon = Cast<AWeapon>(AItemSpawner::SpawnItem(this, DefaultWeaponData));
-	DefaultWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
-	EquippedWeapon = DefaultWeapon;
+	if (AItem* Item = AItemSpawner::SpawnItem(this, DefaultWeaponData))
+	{
+		AWeapon* DefaultWeapon = Cast<AWeapon>(Item);
+		if (IsValid(DefaultWeapon->GetStaticMeshComponent()))
+		{
+			DefaultWeapon->Equip(GetMesh(), FName("HandGrip_R"), this, this);
+            EquippedWeapon = DefaultWeapon;
+            EquipState = EEquipState::EES_Equipped;
+            ArmedState = EArmedState::EA_Armed;
+		}
+	}
 }
 
 
@@ -46,29 +53,18 @@ void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	if (!TargetInRange(CombatTarget, CombatRadius))
+	/*if (!TargetInRange(CombatTarget, CombatRadius))
 	{
 		CombatTarget = nullptr;
-		if (HealthBarWidget)
-		{
-			HealthBarWidget->SetVisibility(false);
-		}
-	}
-}
-
-void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+		HideHealthBar();
+	}*/
 }
 
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 {
+	ShowHealthBar();
+	EnemyState = EEnemyState::EES_HitReaction;
 	Super::GetHit_Implementation(ImpactPoint);
-	if (HealthBarWidget)
-	{
-		HealthBarWidget->SetVisibility(true);
-	}
 }
 
 void AEnemy::Destroyed()
@@ -95,42 +91,19 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	return DamageAmount;
 }
 
-void AEnemy::PerformAttack()
-{
-	Attack();
-}
-
 void AEnemy::Attack()
 {
-	EnemyState = EEnemyState::EES_Attacking;
-	if (SwordAttackMontage)
+	//TODO add check if can attack (not dead, not playing hit animation, has weapon)
+	if (CanAttack())
 	{
-		PlayMontage(SwordAttackMontage);
+		if (SwordAttackMontage)
+        {
+        	PlayMontage(SwordAttackMontage);
+        }
+        EnemyState = EEnemyState::EES_Attacking;
+		bIsAttacking = true;
 	}
 }
-
-/*void AEnemy::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& SectionName)
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AnimMontageToPlay)
-	{
-		AnimInstance->OnMontageEnded.AddDynamic(this, &ABaseCharacter::HandleMontageEnded);
-		AnimInstance->Montage_Play(AnimMontageToPlay);
-		if (SectionName != "")
-		{
-			AnimInstance->Montage_JumpToSection(SectionName, AnimMontageToPlay);
-		}
-		else
-		{
-			//Check the number of sections in AnimMontage to generate a random index
-			const int32 NumberOfSections = AnimMontageToPlay->GetNumSections() - 1;
-			const int32 RandomSectionIndex = FMath::RandRange(0, NumberOfSections);
-			//Get Section Name using a random index
-			const FName RandomSectionName = AnimMontageToPlay->GetSectionName(RandomSectionIndex);
-			AnimInstance->Montage_JumpToSection(RandomSectionName, AnimMontageToPlay);
-		}
-	}
-}*/
 
 void AEnemy::ConfigureCollisionResponces()
 {
@@ -141,13 +114,28 @@ void AEnemy::ConfigureCollisionResponces()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
-void AEnemy::Die()
+void AEnemy::ShowHealthBar()
+{
+	if (HealthBarWidget)
+	{
+		HealthBarWidget->SetVisibility(true);
+	}
+}
+
+void AEnemy::HideHealthBar()
 {
 	if (HealthBarWidget)
 	{
 		HealthBarWidget->SetVisibility(false);
 	}
+}
+
+void AEnemy::Die()
+{
+	EnemyState = EEnemyState::EES_Dead;
+	HideHealthBar();
 	Super::Die();
+	EquippedWeapon->GetWeaponBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 bool AEnemy::TargetInRange(AActor* Target, float RangeRadius)
@@ -155,4 +143,19 @@ bool AEnemy::TargetInRange(AActor* Target, float RangeRadius)
 	if (Target == nullptr) return false;
 	const double DistanceToTarget = (Target->GetActorLocation() - GetActorLocation()).Size();
 	return DistanceToTarget <= RangeRadius;	
+}
+
+bool AEnemy::CanAttack()
+{
+	return EnemyState == EEnemyState::EES_Unoccupied && EquipState != EEquipState::EES_Unequipped;
+}
+
+void AEnemy::AttackEnd()
+{
+	EnemyState = EEnemyState::EES_Unoccupied;
+}
+
+void AEnemy::HitReactEnd()
+{
+	EnemyState = EEnemyState::EES_Unoccupied;
 }

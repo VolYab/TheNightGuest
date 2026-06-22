@@ -11,10 +11,16 @@ class UBoxComponent;
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
-	EWT_1HSword UMETA(DisplayName = "One-Handed Sword"),
-	EWT_2HSword UMETA(DisplayName = "Two-Handed Sword"),
-	EWT_1HSpear UMETA(DisplayName = "One-Handed Spear"),
-	EWT_2HSpear UMETA(DisplayName = "Two-Handed Spear")
+	EWT_Sword UMETA(DisplayName = "Sword"),
+	EWT_Axe UMETA(DisplayName = "Axe"),
+	EWT_Spear UMETA(DisplayName = "Spear")
+};
+
+UENUM(BlueprintType)
+enum class EGripType : uint8
+{
+	EGT_1Hand UMETA(DisplayName = "One-Handed Grip"),
+	EGT_2Hand UMETA(DisplayName = "Two-Handed Grip")
 };
 
 UCLASS()
@@ -30,11 +36,14 @@ public:
 	TArray<AActor*> IgnoreActors;
 
 protected:
-	void BeginPlay() override;
-	
-	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
-	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EWeaponType WeaponType;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EGripType GripType;
+	
+	virtual void BeginPlay() override;
+	
 	UFUNCTION()
 	void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -42,27 +51,40 @@ protected:
 	void CreateFields(const FVector& FieldLocation);
 private:
 	UPROPERTY(EditAnywhere)
-	EWeaponType WeaponType = EWeaponType::EWT_1HSword;
-
-	UPROPERTY(EditAnywhere, Category = "Weapon properties")
 	USoundBase* EquipSound;
 	
-	UPROPERTY(VisibleAnywhere, Category = "Weapon properties")
+	UPROPERTY(VisibleAnywhere, Category = "Box properties")
 	UBoxComponent* WeaponBoxComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Box properties")
 	USceneComponent* TraceBoxStart;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Box properties")
 	USceneComponent* TraceBoxEnd;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon properties")
+	UPROPERTY(EditAnywhere, Category = "Box properties")
+	FVector BoxTraceExtent = FVector(5.f);
+
+	UPROPERTY(EditAnywhere, Category = "Box properties")
+	bool bShowBoxDebug = false;
+
+	UPROPERTY(EditAnywhere, Category = "Attack properties")
 	float WeaponDamage = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon properties")
+	UPROPERTY(EditAnywhere, Category = "Attack properties")
 	float AttackRange = 100.f;
-//Getters and Setters
+
+	void PlayEquipSound() const;
+	void DisableCollisionSphere() const;
+	void HidePopupWidget() const;
+	void BoxTrace(FHitResult& BoxHit);
+	void HandleHitInteraction(FHitResult BoxHit);
+	bool ActorIsSameType(const AActor* OtherActor) const;
 public:
+	//Getters and Setters
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+	FORCEINLINE EGripType GetGripType() const { return GripType; }
 	FORCEINLINE UBoxComponent* GetWeaponBoxComponent() const {return WeaponBoxComponent;}
+
+	FName GetGripName() const;
 };

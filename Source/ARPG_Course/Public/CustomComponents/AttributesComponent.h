@@ -16,7 +16,23 @@ public:
 	UAttributesComponent();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	/**
+	 * This function checks if a character is alive
+	 * @return 
+	 */
 	bool IsAlive() const;
+
+	/**
+	 * This function calculates current health percent
+	 * @return 
+	 */
+	float GetHealthPercent();
+
+	/**
+	 * This function calculates current stamina percent
+	 * @return 
+	 */
+	float GetStaminaPercent();
 protected:
 	//VARIABLES
 	UPROPERTY(EditAnywhere, Category = "Actor attributes")
@@ -25,6 +41,12 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Actor attributes")
 	float MaxHealth;
 
+	UPROPERTY(EditAnywhere, Category = "Actor attributes")
+	float CurrentStamina;
+
+	UPROPERTY(EditAnywhere, Category = "Actor attributes")
+	float MaxStamina;
+	
 	//FUNCTIONS
 	virtual void BeginPlay() override;
 	

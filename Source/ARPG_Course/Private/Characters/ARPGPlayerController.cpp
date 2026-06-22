@@ -5,7 +5,7 @@
 
 AARPGPlayerController::AARPGPlayerController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	SetGenericTeamId(FGenericTeamId(2));
+	AARPGPlayerController::SetGenericTeamId(FGenericTeamId(2));
 }
 
 void AARPGPlayerController::SetGenericTeamId(const FGenericTeamId& NewTeamId)

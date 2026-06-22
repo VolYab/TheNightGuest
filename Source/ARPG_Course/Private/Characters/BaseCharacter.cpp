@@ -5,6 +5,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "CustomComponents/AttributesComponent.h"
+#include "CustomComponents/CombatSystemComponent.h"
 #include "Items/Weapons/Weapon.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -13,6 +14,7 @@ ABaseCharacter::ABaseCharacter()
  	PrimaryActorTick.bCanEverTick = true;
 
 	AttributeComponent = CreateDefaultSubobject<UAttributesComponent>(TEXT("AttributesComponent"));
+	CombatSystemComponent = CreateDefaultSubobject<UCombatSystemComponent>(TEXT("CombatSystemComponent"));
 }
 
 void ABaseCharacter::BeginPlay()
@@ -33,12 +35,20 @@ void ABaseCharacter::Attack()
 
 bool ABaseCharacter::CanAttack()
 {
-	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped;
+	return true;
 }
 
 void ABaseCharacter::AttackEnd()
 {
-	ActionState = EActionState::EAS_Unoccupied;
+}
+
+bool ABaseCharacter::IsArmed()
+{
+	return ArmedState == EArmedState::EA_Armed;
+}
+
+void ABaseCharacter::HitReactEnd()
+{
 }
 
 void ABaseCharacter::Die()
@@ -60,6 +70,7 @@ void ABaseCharacter::Die()
 	}
 	PlayMontage(DeathMontage, AnimSectionName);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetLifeSpan(3.f);
 }
 
@@ -68,37 +79,22 @@ void ABaseCharacter::PlayMontage(UAnimMontage* AnimMontageToPlay, const FName& S
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && AnimMontageToPlay)
 	{
-		AnimInstance->OnMontageEnded.AddDynamic(this, &ABaseCharacter::HandleMontageEnded);
+		FName SectionToPlay;
 		AnimInstance->Montage_Play(AnimMontageToPlay);
+		//If no section name is provided - play a random section
 		if (SectionName == "")
 		{
 			//Check the number of sections in AnimMontage to generate a random index
 			const int32 NumberOfSections = AnimMontageToPlay->GetNumSections() - 1;
 			const int32 RandomSectionIndex = FMath::RandRange(0, NumberOfSections);
 			//Get Section Name using a random index
-			const FName RandomSectionName = AnimMontageToPlay->GetSectionName(RandomSectionIndex);
-			AnimInstance->Montage_JumpToSection(RandomSectionName, AnimMontageToPlay);
+			SectionToPlay = AnimMontageToPlay->GetSectionName(RandomSectionIndex);
 		}
 		else
 		{
-			// Collect all sections with names starting with the SectionName parameter
-			TArray<FName> MatchingSections;
-			for (int32 i = 0; i < AnimMontageToPlay->GetNumSections(); ++i)
-			{
-				const FName CurrentSectionName = AnimMontageToPlay->GetSectionName(i);
-				if (CurrentSectionName.ToString().StartsWith(SectionName.ToString()))
-				{
-					MatchingSections.Add(CurrentSectionName);
-				}
-			}
-
-			// Randomly select one of the matching sections
-			if (MatchingSections.Num() > 0)
-			{
-				const int32 RandomIndex = FMath::RandRange(0, MatchingSections.Num() - 1);
-				AnimInstance->Montage_JumpToSection(MatchingSections[RandomIndex], AnimMontageToPlay);
-			}
+			SectionToPlay = SectionName;
 		}
+		AnimInstance->Montage_JumpToSection(SectionToPlay, AnimMontageToPlay);
 	}
 }
 
@@ -137,16 +133,6 @@ FName ABaseCharacter::CalculateHitDirection(const FVector& ImpactPoint)
 		DiretionName = FName("FromLeft");
 	}
 	return DiretionName;
-}
-
-void ABaseCharacter::HandleMontageEnded(UAnimMontage* AnimMontage, bool bInterrupted)
-{
-	bIsAttackMontageEnded = true;
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AnimInstance->OnMontageEnded.IsAlreadyBound(this, &ABaseCharacter::HandleMontageEnded))
-	{
-		AnimInstance->OnMontageEnded.RemoveDynamic(this, &ABaseCharacter::HandleMontageEnded);
-	}
 }
 
 void ABaseCharacter::SetEnableBoxCollision(ECollisionEnabled::Type BoxCollisionEnabled)
@@ -200,33 +186,3 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint)
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, ImpactPoint, FRotator(90.f, ImpactPoint.Y, ImpactPoint.Z));
 	}
 }
-
-void ABaseCharacter::SetCharacterState()
-{
-	if (EquippedWeapon)
-	{
-		switch (EquippedWeapon->GetWeaponType())
-		{
-		case EWeaponType::EWT_1HSword:
-			CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
-			break;
-		case EWeaponType::EWT_2HSword:
-			CharacterState = ECharacterState::ECS_EquippedTwoHandedWeapon;
-			break;
-		case EWeaponType::EWT_1HSpear:
-			CharacterState = ECharacterState::ECS_EquippedOneHandedSpear;
-			break;
-		case EWeaponType::EWT_2HSpear:
-			CharacterState = ECharacterState::ECS_EquippedTwoHandedSpear;
-			break;
-		default:
-			CharacterState = ECharacterState::ECS_Unequipped;
-			break;
-		}
-	}
-	else
-	{
-		CharacterState = ECharacterState::ECS_Unequipped;
-	}
-}
-
